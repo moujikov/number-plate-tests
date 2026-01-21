@@ -28,35 +28,11 @@ number_plate_detection_and_reading = pipeline("number_plate_detection_and_readin
                                               )
 
 
-
-image_paths = [
-    'test-images/IMG_0780.jpg',
-    'test-images/IMG_0781.jpg',
-    'test-images/IMG_0782.jpg',
-    'test-images/IMG_0783.jpg',
-    'test-images/IMG_0798.jpg',
-    'test-images/IMG_0799.jpg',
-    ]
-
-
-start_time = time.perf_counter()
-print('___________________________________')
-
-for image_path in image_paths:
-    print()
-    result = number_plate_detection_and_reading([image_path])[0]
-    # image = result[0]
-    detections = list(zip(*result[1:]))  # skip image
-    for detection in detections:
-        bbox = detection[0]
-        point = detection[1]
-        zone = detection[2]
-        region_id = detection[3]
-        region_name = detection[4]
-        count_line = detection[5]
-        confidence = detection[6]
-        text = detection[7]
-        print(f'{text} | {region_name} | {confidence}')
-
-elapsed_time = time.perf_counter() - start_time
-print(f'\nDone in {elapsed_time:.2f} sec.')
+number_plate = number_plate_detection_and_reading(['self-check/self-check.jpg'])[0][8][0]
+expected_number_plate = 'C364EH178'
+if number_plate == expected_number_plate:
+  print(f'Successfully read number plate: {number_plate}')
+else:
+  print(f'Error reading number plate: expected {expected_number_plate}, but got {number_plate}')
+  exit(1)
+  
