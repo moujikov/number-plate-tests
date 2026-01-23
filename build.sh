@@ -1,3 +1,3 @@
 #!/bin/bash
 
-DOCKER_BUILDKIT=1 docker build -t number-plate-tests -f ./Dockerfile .
+DOCKER_BUILDKIT=1 docker build -t moujikov/number-plate-tests .
