@@ -23,9 +23,11 @@ RUN python3 -m pip install --upgrade pip
 
 RUN python3 -m pip install cython setuptools numpy opencv_python scikit_image asyncio gitpython pycocotools ujson pillow tqdm matplotlib scipy seaborn ipywidgets gevent termcolor scikit-learn albumentations
 
-RUN python3 -m pip install "torch>=1.12" "torchvision>=0.13" --index-url https://download.pytorch.org/whl/cpu
+RUN python3 -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+RUN python3 -m pip install torchvision --index-url https://download.pytorch.org/whl/cpu
 
-RUN python3 -m pip install "ultralytics>=8.3.12" "pytorch_lightning==1.8.6"
+RUN python3 -m pip install ultralytics --no-deps 
+RUN python3 -m pip install pytorch_lightning==1.8.6 --no-deps 
 
 RUN python3 -m pip install "git+https://github.com/moujikov/ria-com_nomeroff-net.git"
 
