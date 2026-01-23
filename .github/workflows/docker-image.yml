@@ -26,4 +26,5 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
+          platforms: amd64,x86_64,arm64
           tags: ${{ vars.DOCKER_HUB_REPO }}:latest, ${{ vars.DOCKER_HUB_REPO }}:${{ env.TAG }}
