@@ -29,5 +29,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          platforms: linux/amd64,linux/x86_64,linux/arm64
+          platforms: linux/amd64,linux/x86_64
+          cache-from: type=gha,scope=build-cache-scope-${{ github.ref }}
+          cache-to: type=gha,scope=build-cache-scope-${{ github.ref }},mode=max
           tags: ${{ vars.DOCKER_HUB_REPO }}:latest, ${{ vars.DOCKER_HUB_REPO }}:${{ env.TAG }}
