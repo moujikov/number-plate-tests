@@ -31,8 +31,8 @@ number_plate_detection_and_reading = pipeline("number_plate_detection_and_readin
 number_plate = number_plate_detection_and_reading(['self-check/self-check.jpg'])[0][8][0]
 expected_number_plate = 'C364EH178'
 if number_plate == expected_number_plate:
-  print(f'Successfully read number plate: {number_plate}')
+  print(f'✅ SELF TEST PASSED: Successfully read number plate: {number_plate}')
 else:
-  print(f'Error reading number plate: expected {expected_number_plate}, but got {number_plate}')
+  print(f'❌ SELF TEST FAILED: Error reading number plate: expected {expected_number_plate}, but got {number_plate}')
   exit(1)
   
