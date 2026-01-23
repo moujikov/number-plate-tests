@@ -1,7 +1,8 @@
 FROM python:3.12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=Europe/Moscow
+    TZ=Europe/Moscow \
+    PIP_NO_CACHE_DIR=false
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
