@@ -18,20 +18,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --upgrade pip
+RUN pip install --upgrade pip
 
-# WORKDIR /project
+RUN pip install cython setuptools numpy opencv_python scikit_image asyncio gitpython pycocotools ujson pillow tqdm matplotlib scipy seaborn ipywidgets gevent termcolor scikit-learn albumentations
 
-RUN python3 -m pip install cython setuptools numpy opencv_python scikit_image asyncio gitpython pycocotools ujson pillow tqdm matplotlib scipy seaborn ipywidgets gevent termcolor scikit-learn albumentations
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
+RUN pip install torchvision --index-url https://download.pytorch.org/whl/cpu
 
-RUN python3 -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-RUN python3 -m pip install torchvision --index-url https://download.pytorch.org/whl/cpu
-
-RUN python3 -m pip install ultralytics --no-deps 
-RUN python3 -m pip install pytorch_lightning==1.8.6 --no-deps 
-
-RUN python3 -m pip install "git+https://github.com/moujikov/ria-com_nomeroff-net.git"
+RUN pip install ultralytics --no-deps 
+RUN pip install pytorch_lightning==1.8.6 --no-deps
 
 WORKDIR /project/number-plate-tests
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY pipelines pipelines
+COPY test_images test_images
+COPY self_check self_check
+RUN python -m self_check
+
 COPY . .
-RUN python3 -m self_check
+
