@@ -34,4 +34,4 @@ RUN python3 -m pip install "git+https://github.com/moujikov/ria-com_nomeroff-net
 
 WORKDIR /project/number-plate-tests
 COPY . .
-RUN python3 -m self-check
+RUN python3 -m self_check

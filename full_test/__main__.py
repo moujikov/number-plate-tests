@@ -1,21 +1,14 @@
 import time
-from pipelines import Pipelines
+from pipelines import full_pipeline
+from test_images import all_test_image_paths
 
-image_paths = [
-    'test-images/IMG_0780.jpg',
-    'test-images/IMG_0781.jpg',
-    'test-images/IMG_0782.jpg',
-    'test-images/IMG_0783.jpg',
-    'test-images/IMG_0798.jpg',
-    'test-images/IMG_0799.jpg',
-    ]
 
 start_time = time.perf_counter()
 print('___________________________________')
 
-for image_path in image_paths:
+for image_path in all_test_image_paths:
     print()
-    result = Pipelines.ru_by_pipeline([image_path])[0]
+    result = full_pipeline([image_path])[0]
     # image = result[0]
     detections = list(zip(*result[1:]))  # skip image
     for detection in detections:

@@ -1,6 +1,7 @@
-from pipelines import Pipelines
+from pipelines import full_pipeline
+from test_images import self_check_test_image_paths
 
-number_plate = Pipelines.full_pipeline(['test-images/self-check.jpg'])[0][8][0]
+number_plate = full_pipeline(self_check_test_image_paths)[0][8][0]
 expected_number_plate = 'C364EH178'
 
 if number_plate == expected_number_plate:

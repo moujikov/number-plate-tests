@@ -1,19 +1,11 @@
 import time
-from pipelines import Pipelines
-
-image_paths = [
-    'test-images/IMG_0780.jpg',
-    'test-images/IMG_0781.jpg',
-    'test-images/IMG_0782.jpg',
-    'test-images/IMG_0783.jpg',
-    'test-images/IMG_0798.jpg',
-    'test-images/IMG_0799.jpg',
-    ]
+from pipelines import full_pipeline
+from test_images import all_test_image_paths
 
 start_time = time.perf_counter()
 print('___________________________________')
 
-results = Pipelines.full_pipeline(image_paths, num_workers=3, batch_size=3)
+results = full_pipeline(all_test_image_paths, num_workers=3, batch_size=3)
 for result in results:
     print()
     # image = result[0]
