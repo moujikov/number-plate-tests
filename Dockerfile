@@ -32,8 +32,6 @@ RUN python3 -m pip install pytorch_lightning==1.8.6 --no-deps
 
 RUN python3 -m pip install "git+https://github.com/moujikov/ria-com_nomeroff-net.git"
 
-WORKDIR /project/
-COPY ./self-check ./self-check
-RUN python3 -m self-check
-
 WORKDIR /project/number-plate-tests
+COPY . .
+RUN python3 -m self-check

@@ -13,9 +13,9 @@ image_paths = [
 start_time = time.perf_counter()
 print('___________________________________')
 
-results = Pipelines.full_pipeline(image_paths, num_workers=3, batch_size=3)
-for result in results:
+for image_path in image_paths:
     print()
+    result = Pipelines.ru_pipeline([image_path])[0]
     # image = result[0]
     detections = list(zip(*result[1:]))  # skip image
     for detection in detections:
