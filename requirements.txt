@@ -1,2 +1,8 @@
+fastapi
+orjson
+python-multipart
+starlette_prometheus
+uvicorn
+
 PyTurboJPEG  @ git+https://github.com/lilohuang/PyTurboJPEG.git
 nomeroff_net @ git+https://github.com/moujikov/ria-com_nomeroff-net.git
