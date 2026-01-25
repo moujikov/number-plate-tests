@@ -1,10 +1,8 @@
 from nomeroff_net import pipeline
 
-
 __full_pipeline = None
 __ru_by_pipeline = None
 __ru_pipeline = None
-
 
 def full_pipeline(inputs, **kwargs):
   pipeline = __get_full_pipeline()
@@ -27,7 +25,7 @@ def __get_full_pipeline():
     __full_pipeline = pipeline("number_plate_detection_and_reading",
       presets={
         "ru": {
-            "for_regions": ["ru", "eu_ua_ordlo_lpr", "eu_ua_ordlo_dpr"],
+            "for_regions": ["ru"],
             "for_count_lines": [1],
             "model_path": "latest"
         },
@@ -61,7 +59,7 @@ def __get_full_pipeline():
         "class_region": ["ru", "by", "am", "ge", "kz", "kg"],
         "count_lines": [1]
       },
-      image_loader="turbo",
+      # image_loader="turbo",
       default_label="ru",
       default_lines_count=1,
       upscaling=False,
@@ -75,7 +73,7 @@ def __get_ru_by_pipeline():
     __ru_by_pipeline = pipeline("number_plate_detection_and_reading",
       presets={
         "ru": {
-            "for_regions": ["ru", "eu_ua_ordlo_lpr", "eu_ua_ordlo_dpr"],
+            "for_regions": ["ru"],
             "for_count_lines": [1],
             "model_path": "latest"
         },
@@ -89,7 +87,7 @@ def __get_ru_by_pipeline():
         "class_region": ["ru", "by"],
         "count_lines": [1]
       },
-      image_loader="turbo",
+      # image_loader="turbo",
       default_label="ru",
       default_lines_count=1,
       upscaling=False,
@@ -103,12 +101,12 @@ def __get_ru_pipeline():
     __ru_pipeline = pipeline("number_plate_detection_and_reading",
       presets={
         "ru": {
-            "for_regions": ["ru", "eu_ua_ordlo_lpr", "eu_ua_ordlo_dpr"],
+            "for_regions": ["ru"],
             "for_count_lines": [1],
             "model_path": "latest"
         }
       },
-      image_loader="turbo",
+      # image_loader="turbo",
       default_label="ru",
       default_lines_count=1,
       upscaling=False,

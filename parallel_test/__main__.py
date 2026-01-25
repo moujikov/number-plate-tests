@@ -1,11 +1,12 @@
 import time
-from pipelines import full_pipeline
 from test_images import all_test_image_paths
+from utils.pipelines import full_pipeline
+from utils.jpeg import read_local_images
 
 start_time = time.perf_counter()
 print('___________________________________')
 
-results = full_pipeline(all_test_image_paths, num_workers=3, batch_size=3)
+results = full_pipeline(read_local_images(all_test_image_paths), num_workers=3, batch_size=3)
 for result in results:
     print()
     # image = result[0]
