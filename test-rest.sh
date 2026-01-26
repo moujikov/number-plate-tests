@@ -123,7 +123,7 @@ done
 
 start=`date +%s.%N`
 
-curl -v "${BASE_URL}${PATH_SUFFIX}" "${CURL_ARGS[@]}" | jq
+curl -v "${BASE_URL}${PATH_SUFFIX}" ${CURL_ARGS[@]+"${CURL_ARGS[@]}"} | jq
 
 end=`date +%s.%N`
 runtime=$( echo "scale=2; ($end - $start) / 1" | bc -l )
