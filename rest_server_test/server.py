@@ -4,8 +4,6 @@ import time
 import logging
 from fastapi import FastAPI, File, Form, Request, UploadFile,  status
 from fastapi.responses import ORJSONResponse as JSONResponse
-from starlette_prometheus import PrometheusMiddleware
-from starlette_prometheus import metrics
 from typing import List
 from enum import Enum
 
@@ -23,8 +21,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
-app.add_middleware(PrometheusMiddleware)
-app.add_route("/metrics", metrics)
+
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

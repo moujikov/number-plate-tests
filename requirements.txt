@@ -1,7 +1,6 @@
 fastapi
 orjson
 python-multipart
-starlette_prometheus
 uvicorn
 
 PyTurboJPEG  @ git+https://github.com/lilohuang/PyTurboJPEG.git
