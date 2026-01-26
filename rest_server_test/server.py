@@ -1,11 +1,13 @@
 import os
 import sys
+from threading import Lock
 import traceback
 import time
 import logging
+from types import FunctionType
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.responses import ORJSONResponse as JSONResponse
-from typing import List
+from typing import Callable, List
 from enum import Enum
 
 from fastapi.security import OAuth2PasswordBearer
@@ -30,11 +32,18 @@ ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 if ACCESS_TOKEN:
   logger.info('Using access token from environment variable.')
 
+MAX_CONCURRENT_REQUESTS = int(os.getenv('MAX_CONCURRENT_REQUESTS', 0))
+if MAX_CONCURRENT_REQUESTS > 0:
+  logger.info(f'Setting max concurrent requests to {MAX_CONCURRENT_REQUESTS}.')
+
 
 ### FastAPI app
 app = FastAPI()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+lock = Lock()
+concurrent_requests = 0
 
 
 ### Middleware for logging requests execution time
@@ -51,29 +60,35 @@ async def log_requests(request: Request, call_next):
 ### API endpoints
 
 @app.post('/detect_all')
-async def detect_all(
+def detect_all(
               token: str = Depends(oauth2_scheme),
               files: List[UploadFile] = File(...),
               details: DetectionDetails = Form(DetectionDetails.FULL)
               ):
   check_authorized(token)
+  return with_concurrency_check(lambda: _detect_all(files, details))
+  
+def _detect_all(files: List[UploadFile], details: DetectionDetails):
   try:
-    images = await _read_request_images(files)
+    images = _read_request_images(files)
     detections = full_pipeline(images)
     return _detection_responce(detections, details)
   except Exception as e:
-    return _error_responce(e)  
+    return _error_responce(e)
 
 
 @app.post('/detect_ru')
-async def detect_ru(
+def detect_ru(
               token: str = Depends(oauth2_scheme),
               files: List[UploadFile] = File(...),
               details: DetectionDetails = Form(DetectionDetails.FULL)
               ):
   check_authorized(token)
+  return with_concurrency_check(lambda: _detect_ru(files, details))
+  
+def _detect_ru(files: List[UploadFile], details: DetectionDetails):
   try:
-    images = await _read_request_images(files)
+    images = _read_request_images(files)
     detections = ru_pipeline(images)
     return _detection_responce(detections, details)
   except Exception as e:
@@ -85,23 +100,37 @@ async def detect_ru(
 
 def check_authorized(access_token: str):
   if ACCESS_TOKEN and access_token != ACCESS_TOKEN:
-    raise HTTPException(
-      status_code=status.HTTP_401_UNAUTHORIZED, 
-      headers={"WWW-Authenticate": "Bearer"})
+    raise HTTPException(status.HTTP_401_UNAUTHORIZED, headers={"WWW-Authenticate": "Bearer"})
 
-async def _read_request_images(upload_files: List[UploadFile]):
+
+def with_concurrency_check(callable: Callable):
+  global concurrent_requests
+
+  if MAX_CONCURRENT_REQUESTS > 0:
+    with lock:
+      if concurrent_requests < MAX_CONCURRENT_REQUESTS: concurrent_requests += 1
+      else: raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS)
+      
+  try:
+    return callable()
+  finally:
+    if MAX_CONCURRENT_REQUESTS > 0: concurrent_requests -= 1
+
+
+def _read_request_images(upload_files: List[UploadFile]):
   filenames = [upload_file.filename for upload_file in upload_files]
   logger.info(f'Processing files: {", ".join(filenames)}')
 
   images = []
   for upload_file in upload_files:
     try:
-      content = await upload_file.read()
+      content = upload_file.file.read()
       images.append(read_image(content))
     finally:
-      await upload_file.close()
+      upload_file.file.close()
 
   return images
+
 
 def _detection_responce(images_with_detections: list, details: DetectionDetails):
   detections = list(map(lambda x: _filter_image_detections(x, details), images_with_detections))
@@ -110,6 +139,7 @@ def _detection_responce(images_with_detections: list, details: DetectionDetails)
         content={"detections": detections}
     )
 
+
 def _error_responce(e : Exception):
   exc_type, exc_value, exc_tb = sys.exc_info()
   traceback.print_exception(exc_type, exc_value, exc_tb)
@@ -117,6 +147,7 @@ def _error_responce(e : Exception):
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"error": str(e)},
     )
+
 
 def _filter_image_detections(image_detections: list, details: DetectionDetails):
   filtered_result = []

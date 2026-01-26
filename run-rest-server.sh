@@ -4,15 +4,17 @@ set -euo pipefail
 
 usage() {
 	cat <<'EOF'
-Usage: ./run-rest-server.sh [--token <token>]
+Usage: ./run-rest-server.sh [--token <token>] [--requests <requests>]
 
 Options:
-  --token, -t   Access token for authentication.
-  --help, -h    Show this help
+  --token, -t		    Access token for authentication.
+  --requests, -r	  Maximum number of concurrent requests.
+  --help, -h		    Show this help
 
 Examples:
   ./run-rest-server.sh
   ./run-rest-server.sh --token _TOKEN12345
+  ./run-rest-server.sh --token _TOKEN12345 --requests 10
 EOF
 }
 
@@ -28,6 +30,14 @@ while [[ $# -gt 0 ]]; do
 			DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${1#*=}" )
 			shift
 			;;
+    --requests|-r)
+      DOCKER_ENV_PARAMS+=( -e "MAX_CONCURRENT_REQUESTS=${2:-}" )
+      shift 2
+      ;;
+    --requests=*)
+      DOCKER_ENV_PARAMS+=( -e "MAX_CONCURRENT_REQUESTS=${1#*=}" )
+      shift
+      ;;
 		--help|-h)
 			usage
 			exit 0
