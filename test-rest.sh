@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
 	cat <<'EOF'
-Usage: ./test-rest.sh [endpoint] [--base-url <url>] [--file <path> ...]
+Usage: ./test-rest.sh [endpoint] [--base-url <url>] [--file <path> ...] [--token <token>]
 
 Options:
   endpoint      Which endpoint to call.
@@ -14,6 +14,7 @@ Options:
   --url, -u     Server URL (default: http://127.0.0.1:8000)
   --file, -f    Directory or single image file to upload (repeatable).
                 If ommitted a full set of local test images will be used.
+  --token, -t   Access token for authentication.
   --help, -h    Show this help
 
 Examples:
@@ -21,12 +22,13 @@ Examples:
   ./test-rest.sh all
   ./test-rest.sh --url http://localhost:8000
   ./test-rest.sh ru --file ./some.jpg
-  ./test-rest.sh all -f ./test_images
+  ./test-rest.sh all --file ./test_images --token _TOKEN12345
 EOF
 }
 
 BASE_URL="http://127.0.0.1:8000"
 ENDPOINT="ru"
+TOKEN=""
 FILES=()
 
 while [[ $# -gt 0 ]]; do
@@ -47,6 +49,14 @@ while [[ $# -gt 0 ]]; do
 			FILES+=("${1#*=}")
 			shift
 			;;
+		--token|-t)
+			TOKEN="${2:-}"
+			shift 2
+			;;
+		--token=*)
+			TOKEN="${1#*=}"
+			shift
+			;;
 		--help|-h)
 			usage
 			exit 0
@@ -58,14 +68,20 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+CURL_ARGS=()
+
+if [[ -n "$TOKEN" ]]; then
+  CURL_ARGS+=( -H "Authorization: Bearer ${TOKEN}" )
+fi
+
 case "$ENDPOINT" in
 	ru)
 		PATH_SUFFIX="/detect_ru"
-    CURL_FORM_ARGS=( -F "details=none" )
+    CURL_ARGS+=( -F "details=none" )
 		;;
 	all)
 		PATH_SUFFIX="/detect_all"
-    CURL_FORM_ARGS=( -F "details=region" )
+    CURL_ARGS+=( -F "details=region" )
 		;;
 	*)
 		echo "Unknown --endpoint value: $ENDPOINT" >&2
@@ -102,12 +118,12 @@ for f in "${FILES[@]}"; do
     echo "File not found: $f" >&2
     exit 2
   fi
-  CURL_FORM_ARGS+=( -F "files=@${f}" )
+  CURL_ARGS+=( -F "files=@${f}" )
 done
 
 start=`date +%s.%N`
 
-curl -v "${BASE_URL}${PATH_SUFFIX}" "${CURL_FORM_ARGS[@]}" | jq
+curl -v "${BASE_URL}${PATH_SUFFIX}" "${CURL_ARGS[@]}" | jq
 
 end=`date +%s.%N`
 runtime=$( echo "scale=2; ($end - $start) / 1" | bc -l )
