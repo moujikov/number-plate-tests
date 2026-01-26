@@ -66,15 +66,7 @@ def detect_all(
               details: DetectionDetails = Form(DetectionDetails.FULL)
               ):
   check_authorized(token)
-  return with_concurrency_check(lambda: _detect_all(files, details))
-  
-def _detect_all(files: List[UploadFile], details: DetectionDetails):
-  try:
-    images = _read_request_images(files)
-    detections = full_pipeline(images)
-    return _detection_responce(detections, details)
-  except Exception as e:
-    return _error_responce(e)
+  return with_concurrency_check(lambda: _detect(full_pipeline, files, details))
 
 
 @app.post('/detect_ru')
@@ -84,15 +76,7 @@ def detect_ru(
               details: DetectionDetails = Form(DetectionDetails.FULL)
               ):
   check_authorized(token)
-  return with_concurrency_check(lambda: _detect_ru(files, details))
-  
-def _detect_ru(files: List[UploadFile], details: DetectionDetails):
-  try:
-    images = _read_request_images(files)
-    detections = ru_pipeline(images)
-    return _detection_responce(detections, details)
-  except Exception as e:
-    return _error_responce(e)
+  return with_concurrency_check(lambda: _detect(ru_pipeline, files, details))
 
 
 
@@ -115,6 +99,15 @@ def with_concurrency_check(callable: Callable):
     return callable()
   finally:
     if MAX_CONCURRENT_REQUESTS > 0: concurrent_requests -= 1
+
+
+def _detect(pipeline: Callable, files: List[UploadFile], details: DetectionDetails):
+  try:
+    images = _read_request_images(files)
+    detections = pipeline(images)
+    return _detection_responce(detections, details)
+  except Exception as e:
+    return _error_responce(e)
 
 
 def _read_request_images(upload_files: List[UploadFile]):
