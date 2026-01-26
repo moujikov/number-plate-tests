@@ -84,7 +84,7 @@ for d in "${FILES[@]}"; do
   if [[ -d "$d" ]]; then
     while IFS= read -r -d '' f; do
       FILES+=("$f")
-    done < <(find -s "$d" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -print0)
+    done < <(find "$d" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -print0 | sort -z)
   fi
 done
 
