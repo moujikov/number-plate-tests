@@ -1,28 +1,49 @@
+from collections.abc import Callable
+from threading import Lock
 from nomeroff_net import pipeline
+from polars import Enum
 
-__full_pipeline = None
-__ru_by_pipeline = None
-__ru_pipeline = None
+class PipelineType(str, Enum):
+  FULL = "FULL"
+  RU = "RU"
+  RU_BY= "RU_BY"
+
+
+class LockablePipeline(Callable):
+  __pipeline: Callable
+  __lock: Lock
+
+  def __init__(self, pipeline: Callable):
+    self.__pipeline = pipeline
+    self.__lock = Lock()
+
+  def __call__(self, inputs, **kwargs):
+    with self.__lock:
+      return self.__pipeline(inputs, **kwargs)
+
+
+__pipelines: dict[PipelineType, LockablePipeline] = {}
+
 
 def full_pipeline(inputs, **kwargs):
-  pipeline = __get_full_pipeline()
-  return pipeline(inputs, **kwargs)
-  
+  if PipelineType.FULL not in __pipelines:
+    __pipelines[PipelineType.FULL] = LockablePipeline(__create_full_pipeline())
+  return __pipelines[PipelineType.FULL](inputs, **kwargs)
 
 def ru_by_pipeline(inputs, **kwargs):
-  pipeline = __get_ru_by_pipeline()
-  return pipeline(inputs, **kwargs)
-
+  if PipelineType.RU_BY not in __pipelines:
+     __pipelines[PipelineType.RU_BY] = LockablePipeline(__create_ru_by_pipeline())
+  return __pipelines[PipelineType.RU_BY](inputs, **kwargs)
 
 def ru_pipeline(inputs, **kwargs):
-  pipeline = __get_ru_pipeline()
-  return pipeline(inputs, **kwargs)
+  if PipelineType.RU not in __pipelines:
+    __pipelines[PipelineType.RU] = LockablePipeline(__create_ru_pipeline())
+  return __pipelines[PipelineType.RU](inputs, **kwargs)
 
 
-def __get_full_pipeline():
-  global __full_pipeline
-  if __full_pipeline is None:
-    __full_pipeline = pipeline("number_plate_detection_and_reading",
+
+def __create_full_pipeline():
+    return pipeline("number_plate_detection_and_reading",
       presets={
         "ru": {
             "for_regions": ["ru"],
@@ -59,18 +80,14 @@ def __get_full_pipeline():
         "class_region": ["ru", "by", "am", "ge", "kz", "kg"],
         "count_lines": [1]
       },
-      # image_loader="turbo",
       default_label="ru",
       default_lines_count=1,
       upscaling=False,
       off_number_plate_classification=False
       )
-  return __full_pipeline
 
-def __get_ru_by_pipeline():
-  global __ru_by_pipeline
-  if __ru_by_pipeline is None:
-    __ru_by_pipeline = pipeline("number_plate_detection_and_reading",
+def __create_ru_by_pipeline():
+    return pipeline("number_plate_detection_and_reading",
       presets={
         "ru": {
             "for_regions": ["ru"],
@@ -87,18 +104,14 @@ def __get_ru_by_pipeline():
         "class_region": ["ru", "by"],
         "count_lines": [1]
       },
-      # image_loader="turbo",
       default_label="ru",
       default_lines_count=1,
       upscaling=False,
       off_number_plate_classification=False
       )
-  return __ru_by_pipeline
 
-def __get_ru_pipeline():
-  global __ru_pipeline
-  if __ru_pipeline is None:
-    __ru_pipeline = pipeline("number_plate_detection_and_reading",
+def __create_ru_pipeline():
+    return pipeline("number_plate_detection_and_reading",
       presets={
         "ru": {
             "for_regions": ["ru"],
@@ -106,10 +119,8 @@ def __get_ru_pipeline():
             "model_path": "latest"
         }
       },
-      # image_loader="turbo",
       default_label="ru",
       default_lines_count=1,
       upscaling=False,
       off_number_plate_classification=True
       )
-  return __ru_pipeline

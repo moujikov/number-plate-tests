@@ -42,7 +42,7 @@ app = FastAPI()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
-lock = Lock()
+check_concurrency_lock = Lock()
 concurrent_requests = 0
 
 
@@ -91,7 +91,7 @@ def with_concurrency_check(callable: Callable):
   global concurrent_requests
 
   if MAX_CONCURRENT_REQUESTS > 0:
-    with lock:
+    with check_concurrency_lock:
       if concurrent_requests < MAX_CONCURRENT_REQUESTS: concurrent_requests += 1
       else: raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS)
       
