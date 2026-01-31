@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 EXPOSE 8000/tcp
 
@@ -9,9 +9,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
     libglib2.0-0 \
     libgl1 \
-    git \
     libturbojpeg0 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
