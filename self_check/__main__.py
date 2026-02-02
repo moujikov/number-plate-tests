@@ -57,6 +57,8 @@ tests = [
   }
 ]
 
+print(f'Downloading models:')
+full_pipeline([])  # Preload models
 
 start_time = time.perf_counter()
 print(f'Running self-check tests:')
