@@ -1,34 +1,22 @@
 import os
 import sys
-from enum import Enum
 from threading import Lock
 import traceback
-import time
-import logging
 from typing import Callable, List
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.responses import ORJSONResponse as JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 
+from common.data import DetectionDetails
+from common.logging import logger
+from rest_server.common.auth import check_authorized
+from rest_server.common.logging import log_request as _log_request
 from image_processing.jpeg import read_image
 from image_processing.pipelines import full_pipeline, ru_pipeline
 
 
-class DetectionDetails(str, Enum):
-  FULL = "full"
-  REGION = "region"
-  NONE = "none"
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-
-
 ### Configuration from environment variables
-
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN') 
-if ACCESS_TOKEN:
-  logger.info('Using access token from environment variable.')
 
 MAX_CONCURRENT_REQUESTS = int(os.getenv('MAX_CONCURRENT_REQUESTS', 0))
 if MAX_CONCURRENT_REQUESTS > 0:
@@ -38,7 +26,7 @@ if MAX_CONCURRENT_REQUESTS > 0:
 ### FastAPI app
 app = FastAPI()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="access_token", auto_error=False)
 
 check_concurrency_lock = Lock()
 concurrent_requests = 0
@@ -46,12 +34,8 @@ concurrent_requests = 0
 
 ### Middleware for logging requests execution time
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = round((time.time() - start_time) * 1000)
-    logger.info(f"Completed in {process_time}ms with status {response.status_code}")
-    return response
+async def log_request(request: Request, call_next):
+  return await _log_request(request, call_next)
 
 
 
@@ -80,10 +64,6 @@ def detect_ru(
 
 ### Helper functions
 
-def check_authorized(access_token: str):
-  if ACCESS_TOKEN and access_token != ACCESS_TOKEN:
-    raise HTTPException(status.HTTP_401_UNAUTHORIZED, headers={"WWW-Authenticate": "Bearer"})
-
 
 def with_concurrency_check(callable: Callable):
   global concurrent_requests
@@ -103,9 +83,9 @@ def _detect(pipeline: Callable, files: List[UploadFile], details: DetectionDetai
   try:
     images = _read_request_images(files)
     detections = pipeline(images)
-    return _detection_responce(detections, details)
+    return _detection_response(detections, details)
   except Exception as e:
-    return _error_responce(e)
+    return _error_response(e)
 
 
 def _read_request_images(upload_files: List[UploadFile]):
@@ -123,7 +103,7 @@ def _read_request_images(upload_files: List[UploadFile]):
   return images
 
 
-def _detection_responce(images_with_detections: list, details: DetectionDetails):
+def _detection_response(images_with_detections: list, details: DetectionDetails):
   detections = list(map(lambda x: _filter_image_detections(x, details), images_with_detections))
   return JSONResponse(
         status_code = status.HTTP_200_OK, 
@@ -131,7 +111,7 @@ def _detection_responce(images_with_detections: list, details: DetectionDetails)
     )
 
 
-def _error_responce(e : Exception):
+def _error_response(e : Exception):
   exc_type, exc_value, exc_tb = sys.exc_info()
   traceback.print_exception(exc_type, exc_value, exc_tb)
   return JSONResponse(

@@ -54,7 +54,7 @@ done
 
 docker run --rm -t \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-	-v .:/project/number-plate-tests \
+	-v .:/number-plates \
 	-p 8000:8000 \
 	moujikov/number-plate-tests \
 	python -m rest_server.worker

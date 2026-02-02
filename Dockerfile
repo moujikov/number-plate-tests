@@ -31,6 +31,7 @@ WORKDIR /number-plates
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+COPY common common
 COPY image_processing image_processing
 COPY self_check self_check
 
