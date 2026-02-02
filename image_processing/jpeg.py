@@ -9,8 +9,9 @@ def read_image(bytes: bytes):
   return __jpeg.decode(bytes, TJPF_RGB)
 
 
-def read_local_images(files: List[str]):
+def read_local_images(files: List[str] | str) -> List:
   images = []
+  if isinstance(files, str): files = [files]
   for file in files:
     with open(file, "rb") as f:
       images.append(read_image(f.read()))

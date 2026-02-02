@@ -1,20 +1,18 @@
 import os
 import sys
+from enum import Enum
 from threading import Lock
 import traceback
 import time
 import logging
-from types import FunctionType
+from typing import Callable, List
+
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.responses import ORJSONResponse as JSONResponse
-from typing import Callable, List
-from enum import Enum
-
 from fastapi.security import OAuth2PasswordBearer
 
-from test_images import all_test_image_paths
-from utils.jpeg import read_image
-from utils.pipelines import full_pipeline, ru_pipeline
+from image_processing.jpeg import read_image
+from image_processing.pipelines import full_pipeline, ru_pipeline
 
 
 class DetectionDetails(str, Enum):
@@ -61,21 +59,21 @@ async def log_requests(request: Request, call_next):
 
 @app.post('/detect_all')
 def detect_all(
-              token: str = Depends(oauth2_scheme),
+              access_token: str = Depends(oauth2_scheme),
               files: List[UploadFile] = File(...),
               details: DetectionDetails = Form(DetectionDetails.FULL)
               ):
-  check_authorized(token)
+  check_authorized(access_token)
   return with_concurrency_check(lambda: _detect(full_pipeline, files, details))
 
 
 @app.post('/detect_ru')
 def detect_ru(
-              token: str = Depends(oauth2_scheme),
+              access_token: str = Depends(oauth2_scheme),
               files: List[UploadFile] = File(...),
               details: DetectionDetails = Form(DetectionDetails.FULL)
               ):
-  check_authorized(token)
+  check_authorized(access_token)
   return with_concurrency_check(lambda: _detect(ru_pipeline, files, details))
 
 

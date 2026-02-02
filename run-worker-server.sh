@@ -57,4 +57,4 @@ docker run --rm -t \
 	-v .:/project/number-plate-tests \
 	-p 8000:8000 \
 	moujikov/number-plate-tests \
-	python -m rest_server_test
+	python -m rest_server.worker

@@ -1,7 +1,7 @@
 import time
 from test_images import all_test_image_paths
-from utils.pipelines import ru_by_pipeline
-from utils.jpeg import read_local_images
+from image_processing.pipelines import full_pipeline
+from image_processing.jpeg import read_local_images
 
 
 start_time = time.perf_counter()
@@ -9,7 +9,7 @@ print('___________________________________')
 
 for image in read_local_images(all_test_image_paths):
     print()
-    result = ru_by_pipeline([image])[0]
+    result = full_pipeline([image])[0]
     # image = result[0]
     detections = list(zip(*result[1:]))  # skip image
     for detection in detections:

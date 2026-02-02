@@ -26,14 +26,15 @@ RUN pip install torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip install ultralytics --no-deps 
 RUN pip install pytorch_lightning==1.8.6 --no-deps
 
-WORKDIR /project/number-plate-tests
+WORKDIR /number-plates
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY utils utils
-COPY test_images test_images
+COPY image_processing image_processing
 COPY self_check self_check
+
+# Preload all necessary models and check basic detection functionality
 RUN python -m self_check
 
 COPY . .
