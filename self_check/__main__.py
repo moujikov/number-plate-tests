@@ -8,52 +8,62 @@ tests = [
   {
     "file" : "ru.jpg", 
     "number_plate": "C364EH178",
-    "region": "RU"
+    "region": "RU",
+    "country": "RU"
   },
   {
     "file" : "by.jpg", 
     "number_plate": "9559OE7",
-    "region": "BY"
+    "region": "BY",
+    "country": "BY"
   },
   {
     "file" : "am.jpg", 
     "number_plate": "01OA090",
-    "region": "AM"
+    "region": "AM",
+    "country": "AM"
   },
   {
     "file" : "ge.jpg", 
     "number_plate": "MA001QE",
-    "region": "GE"
+    "region": "GE",
+    "country": "GE"
   },
   {
     "file" : "kz.jpg", 
     "number_plate": "410ARZ11",
-    "region": "KZ"
+    "region": "KZ",
+    "country": "KZ"
   },
   {
     "file" : "kg.jpg", 
     "number_plate": "04892AAH",
-    "region": "KG"
+    "region": "KG",
+    "country": "KG"
   },
   {
-    "file" : "est.jpg", 
+    "file" : "ee.jpg", 
     "number_plate": "396KGR",
-    "region": "EU"
+    "region": "EU",
+    "country": "EE"
   },
   {
     "file" : "lt.jpg", 
     "number_plate": "EGL076",
-    "region": "EU"
+    "region": "EU",
+    "country": "LT"
   },
   {
     "file" : "de.jpg", 
     "number_plate": "TFS1941H",
-    "region": "EU"
+    "region": "EU",
+    "country": "DE"
   },
   {
     "file" : "ua.jpg", 
     "number_plate": "BX5100HA",
-    "region": "EU_UA_2015"
+    "region": "EU_UA_2015",
+    "country": "UA"
   }
 ]
 
@@ -68,16 +78,17 @@ for test in tests:
   region = detections[0][5][0].upper()
   number_plate = detections[0][8][0]
 
+  country = test["country"]
   expected_region = test["region"]
   expected_number_plate = test["number_plate"]
 
   if region == expected_region and number_plate == expected_number_plate:
-    print(f'✔️ region {expected_region}: successfully read number plate {expected_number_plate}')
+    print(f'✔️ {country}: successfully read number plate {expected_number_plate}')
   else:
-    print(f'❌ region {expected_region}: error reading number plate {expected_number_plate}, got {region}: {number_plate} instead')
+    print(f'❌ {country}: error reading number plate {expected_number_plate} [{expected_region}], got {number_plate} [{region}] instead')
     failed = True
 
-print(f'-------------------')
+print(f'---------------------------------')
 elapsed_time = time.perf_counter() - start_time
 
 if failed:
