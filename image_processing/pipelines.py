@@ -74,10 +74,20 @@ def __create_full_pipeline():
             "for_regions": ["kg"],
             "for_count_lines": [1],
             "model_path": "latest"
+        },
+        "eu_ua_2004_2015_efficientnet_b2": {
+            "for_regions": ["eu_ua_2004", "eu_ua_2015"],
+            "for_count_lines": [1],
+            "model_path": "latest"
+        },
+        "eu_efficientnet_b2": {
+            "for_regions": ["eu", "xx_unknown"],
+            "for_count_lines": [1],
+            "model_path": "latest"
         }
       },
       classification_options = {
-        "class_region": ["ru", "by", "am", "ge", "kz", "kg"],
+        "class_region": ["ru", "by", "am", "ge", "kz", "kg", "eu_ua_2004", "eu_ua_2015", "eu_ua_1995"],
         "count_lines": [1]
       },
       default_label="ru",
