@@ -4,7 +4,16 @@ from image_processing.pipelines import full_pipeline
 from image_processing.jpeg import read_local_images
 
 start_time = time.perf_counter()
-print('___________________________________')
+print('\nPreloading models...')
+
+full_pipeline([])
+
+elapsed_time = time.perf_counter() - start_time
+print(f'\nDone in {elapsed_time:.2f} sec.')
+
+
+start_time = time.perf_counter()
+print('\nProcessing images...')
 
 results = full_pipeline(read_local_images(all_test_image_paths), num_workers=3, batch_size=3)
 for result in results:

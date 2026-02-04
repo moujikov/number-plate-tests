@@ -3,9 +3,17 @@ from test_images import all_test_image_paths
 from image_processing.pipelines import ru_pipeline
 from image_processing.jpeg import read_local_images
 
+start_time = time.perf_counter()
+print('\nPreloading models...')
+
+ru_pipeline([])
+
+elapsed_time = time.perf_counter() - start_time
+print(f'\nDone in {elapsed_time:.2f} sec.')
+
 
 start_time = time.perf_counter()
-print('___________________________________')
+print('\nProcessing images...')
 
 for image in read_local_images(all_test_image_paths):
     print()
