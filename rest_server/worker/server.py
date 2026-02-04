@@ -23,6 +23,12 @@ if MAX_CONCURRENT_REQUESTS > 0:
   logger.info(f'Setting max concurrent requests to {MAX_CONCURRENT_REQUESTS}.')
 
 
+### Preloading models to avoid first request latency
+logger.info('Preloading models...')
+full_pipeline([])
+ru_pipeline([])
+
+
 ### FastAPI app
 app = FastAPI()
 
