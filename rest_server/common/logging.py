@@ -1,11 +1,33 @@
+import sys
 import time
+import logging
+import traceback
+import asgi_correlation_id
 from fastapi import Request
 
-from common.logging import logger
+stream_handler = logging.StreamHandler()
+stream_handler.addFilter(asgi_correlation_id.CorrelationIdFilter(uuid_length=8))
+stream_handler.setFormatter(logging.Formatter(
+  "%(asctime)s [%(correlation_id)s] %(levelname)s - %(message)s"))
+
+logger = logging.getLogger("__name__")
+logger.setLevel(logging.INFO)
+logger.addHandler(stream_handler)
+logger.propagate = False
+
+
+def info(message: str):
+  logger.info(message)
+
 
 async def log_request(request: Request, call_next):
-  start_time = time.time()
+  start_time = time.perf_counter()
   response = await call_next(request)
-  process_time = round((time.time() - start_time) * 1000)
+  process_time = round((time.perf_counter() - start_time) * 1000)
   logger.info(f"Completed in {process_time}ms with status {response.status_code}")
   return response
+
+
+def log_exception(e : Exception):
+  exc_type, exc_value, exc_tb = sys.exc_info()
+  traceback.print_exception(exc_type, exc_value, exc_tb)

@@ -2,8 +2,11 @@
 
 set -euo pipefail
 
+DEFAULT_HOST="http://127.0.0.1"
+DEFAULT_PORT="8000"
+
 usage() {
-	cat <<'EOF'
+	cat <<EOF
 Usage: ./test-rest.sh [endpoint] [--base-url <url>] [--file <path> ...] [--token <token>]
 
 Options:
@@ -11,7 +14,8 @@ Options:
                 Supported:
                   ru          -> /detect_ru (default)
                   all         -> /detect_all
-  --url, -u     Server URL (default: http://127.0.0.1:8000)
+  --port, -p    Server port (default: ${DEFAULT_PORT})
+  --url, -u     Server URL (default: ${DEFAULT_HOST}:${DEFAULT_PORT}, overrides --port)
   --file, -f    Directory or single image file to upload (repeatable).
                 If ommitted a full set of local test images will be used.
   --token, -t   Access token for authentication.
@@ -19,14 +23,14 @@ Options:
 
 Examples:
   ./test-rest.sh
-  ./test-rest.sh all
-  ./test-rest.sh --url http://localhost:8000
+  ./test-rest.sh all --port 8080
+  ./test-rest.sh --url http://somehost:8080/somepath
   ./test-rest.sh ru --file ./some.jpg
   ./test-rest.sh all --file ./test_images --token _TOKEN12345
 EOF
 }
 
-BASE_URL="http://127.0.0.1:8000"
+BASE_URL=""
 ENDPOINT="ru"
 TOKEN=""
 FILES=()
@@ -39,6 +43,18 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--url=*)
 			BASE_URL="${1#*=}"
+			shift
+			;;
+		--port|-p)
+			if [[ -z "$BASE_URL" ]]; then
+				BASE_URL="${DEFAULT_HOST}:${2:-}"
+			fi
+			shift 2
+			;;
+		--port=*)
+			if [[ -z "$BASE_URL" ]]; then
+				BASE_URL="${DEFAULT_HOST}:${1#*=}"
+			fi
 			shift
 			;;
 		--file|-f)
@@ -68,6 +84,10 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+if [[ -z "$BASE_URL" ]]; then
+	BASE_URL="${DEFAULT_HOST}:${DEFAULT_PORT}"
+fi
+
 CURL_ARGS=()
 
 if [[ -n "$TOKEN" ]]; then
@@ -76,11 +96,11 @@ fi
 
 case "$ENDPOINT" in
 	ru)
-		PATH_SUFFIX="/detect_ru"
+		PATH_SUFFIX="detect_ru"
     CURL_ARGS+=( -F "details=none" )
 		;;
 	all)
-		PATH_SUFFIX="/detect_all"
+		PATH_SUFFIX="detect_all"
     CURL_ARGS+=( -F "details=region" )
 		;;
 	*)
@@ -100,7 +120,7 @@ for d in "${FILES[@]}"; do
   if [[ -d "$d" ]]; then
     while IFS= read -r -d '' f; do
       FILES+=("$f")
-    done < <(find "$d" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -print0 | sort -z)
+    done < <(find "$d" -type f \( -iname '*.jpg' -o -iname '*.jpeg' \) -print0 | sort -z)
   fi
 done
 
@@ -118,12 +138,12 @@ for f in "${FILES[@]}"; do
     echo "File not found: $f" >&2
     exit 2
   fi
-  CURL_ARGS+=( -F "files=@${f}" )
+  CURL_ARGS+=( -F "images=@${f};filename=\"$f\"" )
 done
 
 start=`date +%s.%N`
 
-curl -v "${BASE_URL}${PATH_SUFFIX}" ${CURL_ARGS[@]+"${CURL_ARGS[@]}"} | jq
+curl -v "${BASE_URL}/${PATH_SUFFIX}" ${CURL_ARGS[@]+"${CURL_ARGS[@]}"} | jq
 
 end=`date +%s.%N`
 runtime=$( echo "scale=2; ($end - $start) / 1" | bc -l )

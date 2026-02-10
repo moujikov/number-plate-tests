@@ -4,24 +4,36 @@ set -euo pipefail
 
 usage() {
 	cat <<'EOF'
-Usage: ./run-rest-server.sh [--token <token>] [--requests <requests>]
+Usage: ./run-worker-server.sh [--port <port>] [--token <token>] [--requests <requests>]
 
 Options:
-  --token, -t		    Access token for authentication.
+  --port, -p		    Port to run the server on.
+	--token, -t		    Access token for authentication.
   --requests, -r	  Maximum number of concurrent requests.
   --help, -h		    Show this help
 
 Examples:
-  ./run-rest-server.sh
-  ./run-rest-server.sh --token _TOKEN12345
-  ./run-rest-server.sh --token _TOKEN12345 --requests 10
+  ./run-worker-server.sh
+  ./run-worker-server.sh --port 8000
+  ./run-worker-server.sh --token _TOKEN12345 --requests 10
 EOF
 }
 
 DOCKER_ENV_PARAMS=()
+PORT=8000
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
+		--port|-p)
+			DOCKER_ENV_PARAMS+=( -e "PORT=${2:-}" )
+			PORT="${2:-}"
+			shift 2
+			;;
+		--port=*)
+			DOCKER_ENV_PARAMS+=( -e "PORT=${1#*=}" )
+			PORT="${1#*=}"
+			shift
+			;;
 		--token|-t)
 			DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${2:-}" )
 			shift 2
@@ -55,6 +67,6 @@ done
 docker run --rm -t \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
 	-v .:/number-plates \
-	-p 8000:8000 \
+	-p ${PORT}:${PORT} \
 	moujikov/number-plate-tests \
 	python -m rest_server.worker

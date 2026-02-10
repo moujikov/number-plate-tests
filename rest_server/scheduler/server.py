@@ -1,71 +1,96 @@
-import sys
-import traceback
+import asyncio
+import contextlib
+import contextlib
+import urllib
 
-from fastapi import Depends, FastAPI, File, Form, Request, UploadFile,  status
-from fastapi.responses import ORJSONResponse as JSONResponse
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
-from typing import List
+from asgi_correlation_id import CorrelationIdMiddleware
 
+import rest_server.common.logging as server_logging
+import rest_server.common.auth as server_auth
 from common.data import DetectionDetails
-from common.logging import logger
-from rest_server.common.auth import check_authorized
-from rest_server.common.logging import log_request as _log_request
+from .task import ImageDetectionWorkerTask
+from .pool import RoundRobinWorkersPool, WorkersPoolConfigurator
 
+### Resources initialization
+workers = RoundRobinWorkersPool()
+
+  
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    workers_configurator = WorkersPoolConfigurator(workers)
+    workers_configurator.read_settings_from_environment()
+
+    yield
+    # Shutdown    
+    await workers.close()
 
 
 ### FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
+auth = OAuth2PasswordBearer(tokenUrl="access_token", auto_error=False)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="access_token", auto_error=False)
 
-
-### Middleware for logging requests execution time
+### Middlewares for logging requests
 @app.middleware("http")
 async def log_request(request: Request, call_next):
-  return await _log_request(request, call_next)
+  return await server_logging.log_request(request, call_next)
 
+app.add_middleware(CorrelationIdMiddleware)
 
 
 ### API endpoints
 
 @app.post('/detect_all')
-def detect_all(
-              access_token: str = Depends(oauth2_scheme),
-              files: List[UploadFile] = File(...),
+async def detect_all(
+              access_token: str = Depends(auth),
+              images: list[UploadFile] = File(...),
               details: DetectionDetails = Form(DetectionDetails.FULL)
               ):
-  check_authorized(access_token)
-  return forward_request("detect_all", files, details)
-
+  server_auth.check_authorized(access_token)
+  return await forward_request("detect_all", images, details)
 
 @app.post('/detect_ru')
-def detect_ru(
-              access_token: str = Depends(oauth2_scheme),
-              files: List[UploadFile] = File(...),
+async def detect_ru(
+              access_token: str = Depends(auth),
+              images: list[UploadFile] = File(...),
               details: DetectionDetails = Form(DetectionDetails.FULL)
               ):
-  check_authorized(access_token)
-  return forward_request("detect_ru", files, details)
+  server_auth.check_authorized(access_token)
+  return await forward_request("detect_ru", images, details)
 
 
 
 ### Helper functions
 
+async def forward_request(path: str, upload_files: list[UploadFile], details: DetectionDetails):
+  filenames = [urllib.parse.unquote(f.filename) for f in upload_files]
+  server_logging.info(f'Processing files: {", ".join(filenames)}')
 
-def forward_request(path: str, files: List[UploadFile], details: DetectionDetails):
   try:
-      return JSONResponse(
-        status_code = status.HTTP_200_OK, 
-        content={"detections": {}}
-    )
+    async with asyncio.TaskGroup() as tg:
+      tasks = []
+      for file in upload_files:
+        t = ImageDetectionWorkerTask(path, details)
+        name = urllib.parse.unquote(file.filename)
+        t.add_image(name, file.content_type, await file.read())
+        tasks.append(tg.create_task(workers.schedule_task(t), name = name))
+
+    results = []
+    for task in tasks:
+      result = task.result()
+      if "images" in result:
+        results.extend(result["images"])
+      else:
+        results.append({
+          "image": task.get_name(), 
+          "error": result
+        })
+
+    return {"images": results}
+
   except Exception as e:
-    return _error_response(e)
-
-
-def _error_response(e : Exception):
-  exc_type, exc_value, exc_tb = sys.exc_info()
-  traceback.print_exception(exc_type, exc_value, exc_tb)
-  return JSONResponse(
-        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"error": str(e)},
-    )
+    server_logging.log_exception(e)
+    raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))
