@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
 	cat <<'EOF'
-Usage: ./run-worker-server.sh [--port <port>] [--token <token>] [--requests <requests>]
+Usage: ./docker/run-worker.sh [--port <port>] [--token <token>] [--requests <requests>]
 
 Options:
   --port, -p		    Port to run the server on.
@@ -13,9 +13,9 @@ Options:
   --help, -h		    Show this help
 
 Examples:
-  ./run-worker-server.sh
-  ./run-worker-server.sh --port 8000
-  ./run-worker-server.sh --token _TOKEN12345 --requests 10
+  ./docker/run-worker.sh
+  ./docker/run-worker.sh --port 8000
+  ./docker/run-worker.sh --token _TOKEN12345 --requests 10
 EOF
 }
 
@@ -66,7 +66,6 @@ done
 
 docker run --rm -t \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-	-v .:/number-plates \
+	-v .:/app \
 	-p ${PORT}:${PORT} \
-	moujikov/number-plate-tests \
-	python -m rest_server.worker
+	moujikov/number-plates-worker

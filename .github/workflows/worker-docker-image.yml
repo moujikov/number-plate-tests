@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Worker Docker Image CI
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 concurrency:
-  group: docker-image-ci-${{ github.ref }}
+  group: worker-docker-image-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -34,7 +34,10 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
+          file: ./docker/worker/Dockerfile
           push: true
           cache-from: type=gha,scope=build-cache-scope-${{ github.ref }}
           cache-to: type=gha,scope=build-cache-scope-${{ github.ref }},mode=max
-          tags: ${{ vars.DOCKER_HUB_REPO }}:latest, ${{ vars.DOCKER_HUB_REPO }}:${{ env.TAG }}
+          tags: >
+                ${{ vars.DOCKER_HUB_WORKER_REPO }}:latest,
+                ${{ vars.DOCKER_HUB_WORKER_REPO }}:${{ env.TAG }}

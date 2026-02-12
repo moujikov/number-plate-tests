@@ -26,10 +26,11 @@ RUN pip install torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip install ultralytics --no-deps 
 RUN pip install pytorch_lightning --no-deps
 
-WORKDIR /app
+RUN pip install git+https://github.com/lilohuang/PyTurboJPEG.git
+RUN pip install git+https://github.com/moujikov/ria-com_nomeroff-net.git
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+
+WORKDIR /app
 
 COPY common common
 COPY image_processing image_processing
@@ -38,5 +39,7 @@ COPY self_check self_check
 # Preload all necessary models and check basic detection functionality
 RUN python -m self_check
 
-COPY . .
-CMD [ "bash" ]
+COPY rest_server/common rest_server/common
+COPY rest_server/worker rest_server/worker
+
+ENTRYPOINT ["python", "-m", "rest_server.worker"]

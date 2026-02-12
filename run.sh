@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
 docker run --rm -it \
-	-v .:/number-plates \
+	-v .:/app \
 	-p 8000:8000 \
-	moujikov/number-plate-tests bash
+	moujikov/number-plates-all

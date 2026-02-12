@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
 	cat <<'EOF'
-Usage: ./run-scheduler-server.sh [--port <port>] [--token <token>] [--worker-port <port>] [--worker-token <token>] ...
+Usage: ./docker/run-scheduler.sh [--port <port>] [--token <token>] [--worker-port <port>] [--worker-token <token>] ...
 
 Options:
   --port, -p		    		Port to run the server on.
@@ -14,8 +14,8 @@ Options:
   --help, -h		    		Show this help
 
 Examples:
-  ./run-scheduler-server.sh
-  ./run-scheduler-server.sh --port 8000 --token _TOKEN12345
+  ./docker/run-scheduler.sh
+  ./docker/run-scheduler.sh --port 8000 --token _TOKEN12345
 EOF
 }
 
@@ -77,8 +77,7 @@ done
 
 docker run --rm -t \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-	-v .:/number-plates \
+	-v .:/app \
 	-p ${PORT}:${PORT} \
 	--add-host host.docker.internal:host-gateway \
-	moujikov/number-plate-tests \
-	python -m rest_server.scheduler
+	moujikov/number-plates-scheduler
