@@ -43,6 +43,11 @@ app.add_middleware(CorrelationIdMiddleware)
 
 ### API endpoints
 
+@app.get('/healthcheck')
+def healthcheck():
+  return {"status": "ok"}
+
+
 @app.post('/detect_all')
 async def detect_all(
               access_token: str = Depends(auth),
@@ -52,6 +57,7 @@ async def detect_all(
   server_auth.check_authorized(access_token)
   return await forward_request("detect_all", images, details)
 
+
 @app.post('/detect_ru')
 async def detect_ru(
               access_token: str = Depends(auth),
@@ -60,7 +66,6 @@ async def detect_ru(
               ):
   server_auth.check_authorized(access_token)
   return await forward_request("detect_ru", images, details)
-
 
 
 ### Helper functions

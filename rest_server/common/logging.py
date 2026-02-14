@@ -21,10 +21,13 @@ def info(message: str):
 
 
 async def log_request(request: Request, call_next):
-  start_time = time.perf_counter()
+  if request.url.path != "/healthcheck":
+    logger.info(f"Processing request: {request.method} {request.url.path} from {request.client.host}")
+    start_time = time.perf_counter()
   response = await call_next(request)
-  process_time = round((time.perf_counter() - start_time) * 1000)
-  logger.info(f"Completed in {process_time}ms with status {response.status_code}")
+  if request.url.path != "/healthcheck":
+    process_time = round((time.perf_counter() - start_time) * 1000)
+    logger.info(f"Completed in {process_time}ms with status {response.status_code}")
   return response
 
 

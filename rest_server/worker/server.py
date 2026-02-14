@@ -45,6 +45,11 @@ app.add_middleware(CorrelationIdMiddleware)
 
 ### API endpoints
 
+@app.get('/healthcheck')
+def healthcheck():
+  return {"status": "ok"}
+
+
 @app.post('/detect_all')
 def detect_all(
               access_token: str = Depends(auth),

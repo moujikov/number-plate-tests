@@ -95,8 +95,8 @@ class WorkerPromise:
 
 
 class WorkersPoolConfigurator:
-  WORKER_URL_PREFIX = "WORKER_URL_#"
-  WORKER_ACCESS_TOKEN_PREFIX = "WORKER_ACCESS_TOKEN_#"
+  WORKER_URL_PREFIX = "WORKER_URL_"
+  WORKER_ACCESS_TOKEN_PREFIX = "WORKER_ACCESS_TOKEN_"
 
   def __init__(self, pool: WorkersPool):
     self.pool = pool

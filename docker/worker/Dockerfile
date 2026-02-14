@@ -1,7 +1,5 @@
 FROM python:3.14-slim
 
-EXPOSE 8000/tcp
-
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Europe/Moscow \
     PIP_NO_CACHE_DIR=false
@@ -14,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libgl1 \
     libturbojpeg0 \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -43,3 +42,6 @@ COPY rest_server/common rest_server/common
 COPY rest_server/worker rest_server/worker
 
 ENTRYPOINT ["python", "-m", "rest_server.worker"]
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --start-interval=1s --retries=3 \
+    CMD curl --fail http://${BIND:-localhost}:${PORT:-8000}/healthcheck || exit 1

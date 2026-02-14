@@ -45,20 +45,20 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--worker-port|-wp)
 			url_id=$((url_id+1))
-			DOCKER_ENV_PARAMS+=( -e "WORKER_URL_#${url_id}=http://host.docker.internal:${2:-}" )
+			DOCKER_ENV_PARAMS+=( -e "WORKER_URL_${url_id}=http://host.docker.internal:${2:-}" )
 			shift 2
 			;;
 		--worker-port=*)
 			url_id=$((url_id+1))
-			DOCKER_ENV_PARAMS+=( -e "WORKER_URL_#${url_id}=http://host.docker.internal:${1#*=}" )
+			DOCKER_ENV_PARAMS+=( -e "WORKER_URL_${url_id}=http://host.docker.internal:${1#*=}" )
 			shift
 			;;
 		--worker-token|-wt)
-			DOCKER_ENV_PARAMS+=( -e "WORKER_ACCESS_TOKEN_#${url_id}=${2:-}" )
+			DOCKER_ENV_PARAMS+=( -e "WORKER_ACCESS_TOKEN_${url_id}=${2:-}" )
 			shift 2
 			;;
 		--worker-token=*)
-			DOCKER_ENV_PARAMS+=( -e "WORKER_ACCESS_TOKEN_#${url_id}=${1#*=}" )
+			DOCKER_ENV_PARAMS+=( -e "WORKER_ACCESS_TOKEN_${url_id}=${1#*=}" )
 			shift
 			;;
 		--help|-h)
