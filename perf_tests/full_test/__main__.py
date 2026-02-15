@@ -1,12 +1,11 @@
 import time
 from test_images import all_test_image_paths
-from image_processing.pipelines import full_pipeline
+from image_processing.pipelines import setup_full_pipeline, full_pipeline
 from image_processing.jpeg import read_local_images
 
 start_time = time.perf_counter()
 print('\nPreloading models...')
-
-full_pipeline([])
+setup_full_pipeline()
 
 elapsed_time = time.perf_counter() - start_time
 print(f'\nDone in {elapsed_time:.2f} sec.')

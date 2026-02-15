@@ -12,7 +12,9 @@ import rest_server.common.logging as server_logging
 import rest_server.common.auth as server_auth
 from common.data import DetectionDetails
 from image_processing.jpeg import read_image
-from image_processing.pipelines import full_pipeline, ru_pipeline
+from image_processing.pipelines import (
+  setup_full_pipeline, setup_ru_by_pipeline, setup_ru_pipeline, 
+  full_pipeline, ru_by_pipeline, ru_pipeline )
 
 
 ### Configuration from environment variables
@@ -24,8 +26,13 @@ if MAX_CONCURRENT_REQUESTS > 0:
 
 ### Preloading models to avoid first request latency
 general_logging.info('Preloading models...')
-full_pipeline([])
-ru_pipeline([])
+DETECT_COUNTRIES = os.getenv('DETECT_COUNTRIES', 'RU').upper()
+if DETECT_COUNTRIES == 'ALL':
+  setup_full_pipeline()
+elif DETECT_COUNTRIES == 'RU_BY':
+  setup_ru_by_pipeline()
+elif DETECT_COUNTRIES == 'RU':
+  setup_ru_pipeline()
 
 
 ### FastAPI app
@@ -58,6 +65,16 @@ def detect_all(
               ):
   server_auth.check_authorized(access_token)
   return with_concurrency_check(lambda: _detect(full_pipeline, images, details))
+
+
+@app.post('/detect_ru_by')
+def detect_ru_by(
+              access_token: str = Depends(auth),
+              images: list[UploadFile] = File(...),
+              details: DetectionDetails = Form(DetectionDetails.FULL)
+              ):
+  server_auth.check_authorized(access_token)
+  return with_concurrency_check(lambda: _detect(ru_by_pipeline, images, details))
 
 
 @app.post('/detect_ru')

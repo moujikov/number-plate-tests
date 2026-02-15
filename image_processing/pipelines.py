@@ -25,19 +25,39 @@ class LockablePipeline(Callable):
 __pipelines: dict[PipelineType, LockablePipeline] = {}
 
 
+def setup_full_pipeline():
+  if PipelineType.FULL not in __pipelines:
+    pipeline = __create_full_pipeline()
+    pipeline([]) # Preload models to avoid first request latency
+    __pipelines[PipelineType.FULL] = LockablePipeline(pipeline)
+
+def setup_ru_by_pipeline():
+  if PipelineType.RU_BY not in __pipelines:
+    pipeline = __create_ru_by_pipeline()
+    pipeline([]) # Preload models to avoid first request latency
+    __pipelines[PipelineType.RU_BY] = LockablePipeline(pipeline)
+
+def setup_ru_pipeline():
+  if PipelineType.RU not in __pipelines:
+    pipeline = __create_ru_pipeline()
+    pipeline([]) # Preload models to avoid first request latency
+    __pipelines[PipelineType.RU] = LockablePipeline(pipeline)
+
+
+
 def full_pipeline(inputs, **kwargs):
   if PipelineType.FULL not in __pipelines:
-    __pipelines[PipelineType.FULL] = LockablePipeline(__create_full_pipeline())
+    raise Exception("Full pipeline is not initialized")
   return __pipelines[PipelineType.FULL](inputs, **kwargs)
 
 def ru_by_pipeline(inputs, **kwargs):
   if PipelineType.RU_BY not in __pipelines:
-     __pipelines[PipelineType.RU_BY] = LockablePipeline(__create_ru_by_pipeline())
+     raise Exception("RU_BY pipeline is not initialized")
   return __pipelines[PipelineType.RU_BY](inputs, **kwargs)
 
 def ru_pipeline(inputs, **kwargs):
   if PipelineType.RU not in __pipelines:
-    __pipelines[PipelineType.RU] = LockablePipeline(__create_ru_pipeline())
+    raise Exception("RU pipeline is not initialized")
   return __pipelines[PipelineType.RU](inputs, **kwargs)
 
 
