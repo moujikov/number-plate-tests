@@ -7,32 +7,29 @@ DEFAULT_PORT="8000"
 
 usage() {
 	cat <<EOF
-Usage: ./test-rest.sh [endpoint] [--base-url <url>] [--file <path> ...] [--token <token>]
+Usage: ./test-rest.sh [--base-url <url>] [--file <path> ...] [--token <token>]
 
 Options:
-  endpoint      Which endpoint to call.
-                Supported:
-                  ru          -> /detect_ru (default)
-                  all         -> /detect_all
-  --port, -p    Server port (default: ${DEFAULT_PORT})
-  --url, -u     Server URL (default: ${DEFAULT_HOST}:${DEFAULT_PORT}, overrides --port)
-  --file, -f    Directory or single image file to upload (repeatable).
-                If ommitted a full set of local test images will be used.
-  --token, -t   Access token for authentication.
-  --help, -h    Show this help
+  --port, -p    	Server port (default: ${DEFAULT_PORT})
+  --url, -u     	Server URL (default: ${DEFAULT_HOST}:${DEFAULT_PORT}, overrides --port)
+  --file, -f    	Directory or single image file to upload (repeatable).
+                	If ommitted a full set of local test images will be used.
+  --token, -t   	Access token for authentication.
+  --details, -d   Result details level (default: none (number plate only); options: full, region).
+  --help, -h    	Show this help
 
 Examples:
   ./test-rest.sh
   ./test-rest.sh all --port 8080
   ./test-rest.sh --url http://somehost:8080/somepath
   ./test-rest.sh ru --file ./some.jpg
-  ./test-rest.sh all --file ./test_images --token _TOKEN12345
+  ./test-rest.sh all --file ./test_images --token _TOKEN12345 --details full
 EOF
 }
 
 BASE_URL=""
-ENDPOINT="ru"
 TOKEN=""
+DETAILS=""
 FILES=()
 
 while [[ $# -gt 0 ]]; do
@@ -73,12 +70,22 @@ while [[ $# -gt 0 ]]; do
 			TOKEN="${1#*=}"
 			shift
 			;;
+		--details|-d)
+			DETAILS="${2:-}"
+			shift 2
+			;;
+		--details=*)
+			DETAILS="${1#*=}"
+			shift
+			;;
 		--help|-h)
 			usage
 			exit 0
 			;;
 		*)
-			ENDPOINT="$1"
+			echo "Unknown argument: $1" >&2
+			usage
+			exit 1
       shift
 			;;
 	esac
@@ -94,21 +101,10 @@ if [[ -n "$TOKEN" ]]; then
   CURL_ARGS+=( -H "Authorization: Bearer ${TOKEN}" )
 fi
 
-case "$ENDPOINT" in
-	ru)
-		PATH_SUFFIX="detect_ru"
-    CURL_ARGS+=( -F "details=none" )
-		;;
-	all)
-		PATH_SUFFIX="detect_all"
-    CURL_ARGS+=( -F "details=region" )
-		;;
-	*)
-		echo "Unknown --endpoint value: $ENDPOINT" >&2
-		usage >&2
-		exit 2
-		;;
-esac
+if [[ -n "$DETAILS" ]]; then
+	CURL_ARGS+=( -F "details=${DETAILS}" )
+fi
+
 
 # If no files provided, use all local test images
 if [[ ${#FILES[@]} -eq 0 ]]; then
@@ -143,7 +139,7 @@ done
 
 start=`date +%s.%N`
 
-curl -v "${BASE_URL}/${PATH_SUFFIX}" ${CURL_ARGS[@]+"${CURL_ARGS[@]}"} | jq
+curl -v "${BASE_URL}/detect" ${CURL_ARGS[@]+"${CURL_ARGS[@]}"} | jq
 
 end=`date +%s.%N`
 runtime=$( echo "scale=2; ($end - $start) / 1" | bc -l )

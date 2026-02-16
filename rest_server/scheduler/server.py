@@ -48,24 +48,15 @@ def healthcheck():
   return {"status": "ok"}
 
 
-@app.post('/detect_all')
+@app.post('/detect')
 async def detect_all(
               access_token: str = Depends(auth),
               images: list[UploadFile] = File(...),
-              details: DetectionDetails = Form(DetectionDetails.FULL)
+              details: DetectionDetails = Form(DetectionDetails.NONE)
               ):
   server_auth.check_authorized(access_token)
-  return await forward_request("detect_all", images, details)
+  return await forward_request("detect", images, details)
 
-
-@app.post('/detect_ru')
-async def detect_ru(
-              access_token: str = Depends(auth),
-              images: list[UploadFile] = File(...),
-              details: DetectionDetails = Form(DetectionDetails.FULL)
-              ):
-  server_auth.check_authorized(access_token)
-  return await forward_request("detect_ru", images, details)
 
 
 ### Helper functions

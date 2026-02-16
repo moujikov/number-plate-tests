@@ -1,6 +1,6 @@
 import time
 from test_images import all_test_image_paths
-from image_processing.pipelines import setup_full_pipeline, full_pipeline
+from image_processing.pipelines import setup_full_pipeline, pipeline
 from image_processing.jpeg import read_local_images
 
 start_time = time.perf_counter()
@@ -14,7 +14,7 @@ print(f'\nDone in {elapsed_time:.2f} sec.')
 start_time = time.perf_counter()
 print('\nProcessing images...')
 
-results = full_pipeline(read_local_images(all_test_image_paths), num_workers=3, batch_size=3)
+results = pipeline(read_local_images(all_test_image_paths), num_workers=3, batch_size=3)
 for result in results:
     print()
     # image = result[0]

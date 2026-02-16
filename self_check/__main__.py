@@ -1,5 +1,5 @@
 import time
-from image_processing.pipelines import setup_full_pipeline, full_pipeline
+from image_processing.pipelines import setup_full_pipeline, pipeline
 from image_processing.jpeg import read_local_images
 
 failed = False
@@ -74,7 +74,7 @@ start_time = time.perf_counter()
 print(f'Running self-check tests:')
 
 for test in tests:
-  detections = full_pipeline(read_local_images(f'self_check/test_images/{test["file"]}'))
+  detections = pipeline(read_local_images(f'self_check/test_images/{test["file"]}'))
   region = detections[0][5][0].upper()
   number_plate = detections[0][8][0]
 

@@ -10,16 +10,18 @@ Options:
   --port, -p		    Port to run the server on.
 	--token, -t		    Access token for authentication.
   --requests, -r	  Maximum number of concurrent requests.
+	--countries, -c  	Supported countries (default: RU; options: RU_BY, ALL).
   --help, -h		    Show this help
 
 Examples:
   ./docker/run-worker.sh
   ./docker/run-worker.sh --port 8000
-  ./docker/run-worker.sh --token _TOKEN12345 --requests 10
+  ./docker/run-worker.sh --token _TOKEN12345 --requests 10 --countries ALL
 EOF
 }
 
 DOCKER_ENV_PARAMS=()
+COUNTRIES=""
 PORT=8000
 
 while [[ $# -gt 0 ]]; do
@@ -48,6 +50,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --requests=*)
       DOCKER_ENV_PARAMS+=( -e "MAX_CONCURRENT_REQUESTS=${1#*=}" )
+      shift
+      ;;
+		--countries|-c)
+      DOCKER_ENV_PARAMS+=( -e "DETECT_COUNTRIES=${2:-}" )
+      shift 2
+      ;;
+    --countries=*)
+      DOCKER_ENV_PARAMS+=( -e "DETECT_COUNTRIES=${1#*=}" )
       shift
       ;;
 		--help|-h)

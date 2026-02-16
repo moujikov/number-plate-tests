@@ -13,9 +13,10 @@ import rest_server.common.logging as server_logging
 import rest_server.common.auth as server_auth
 from common.data import DetectionDetails
 from image_processing.jpeg import read_image
-from image_processing.pipelines import (
-  setup_full_pipeline, setup_ru_by_pipeline, setup_ru_pipeline, 
-  full_pipeline, ru_by_pipeline, ru_pipeline )
+from image_processing.pipelines import ( pipeline,
+                                         setup_full_pipeline, 
+                                         setup_ru_by_pipeline, 
+                                         setup_ru_pipeline )
 
 
 ### Configuration from environment variables
@@ -26,14 +27,20 @@ if MAX_CONCURRENT_REQUESTS > 0:
 
 
 ### Preloading models to avoid first request latency
-general_logging.info('Preloading models...')
 DETECT_COUNTRIES = os.getenv('DETECT_COUNTRIES', 'RU').upper()
 if DETECT_COUNTRIES == 'ALL':
+  general_logging.info('Preloading models for ALL number plate types...')
   setup_full_pipeline()
 elif DETECT_COUNTRIES == 'RU_BY':
+  general_logging.info('Preloading models for RU and BY number plates...')
   setup_ru_by_pipeline()
 elif DETECT_COUNTRIES == 'RU':
+  general_logging.info('Preloading models for RU number plates...')
   setup_ru_pipeline()
+else:
+  general_logging.error(
+    f'Unknown value for DETECT_COUNTRIES: {DETECT_COUNTRIES}. '
+    f'Supported values are: ALL, RU_BY, RU.')
 
 
 ### FastAPI app
@@ -58,34 +65,15 @@ def healthcheck():
   return {"status": "ok"}
 
 
-@app.post('/detect_all')
-def detect_all(
-              access_token: str = Depends(auth),
-              images: list[UploadFile] = File(...),
-              details: DetectionDetails = Form(DetectionDetails.FULL)
-              ):
+@app.post('/detect')
+def detect(
+           access_token: str = Depends(auth),
+           images: list[UploadFile] = File(...),
+           details: DetectionDetails = Form(DetectionDetails.NONE)
+          ):
   server_auth.check_authorized(access_token)
-  return with_concurrency_check(lambda: _detect(full_pipeline, images, details))
+  return with_concurrency_check(lambda: _detect(pipeline, images, details))
 
-
-@app.post('/detect_ru_by')
-def detect_ru_by(
-              access_token: str = Depends(auth),
-              images: list[UploadFile] = File(...),
-              details: DetectionDetails = Form(DetectionDetails.FULL)
-              ):
-  server_auth.check_authorized(access_token)
-  return with_concurrency_check(lambda: _detect(ru_by_pipeline, images, details))
-
-
-@app.post('/detect_ru')
-def detect_ru(
-              access_token: str = Depends(auth),
-              images: list[UploadFile] = File(...),
-              details: DetectionDetails = Form(DetectionDetails.FULL)
-              ):
-  server_auth.check_authorized(access_token)
-  return with_concurrency_check(lambda: _detect(ru_pipeline, images, details))
 
 
 ### Helper functions
