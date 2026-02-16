@@ -44,7 +44,7 @@ app.add_middleware(CorrelationIdMiddleware)
 ### API endpoints
 
 @app.get('/healthcheck')
-def healthcheck():
+async def healthcheck():
   return {"status": "ok"}
 
 

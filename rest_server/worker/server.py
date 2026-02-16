@@ -1,3 +1,5 @@
+import asyncio
+from collections.abc import Awaitable
 import os
 import urllib
 from threading import Lock
@@ -46,7 +48,6 @@ else:
 ### FastAPI app
 app = FastAPI()
 auth = OAuth2PasswordBearer(tokenUrl="access_token", auto_error=False)
-check_concurrency_lock = Lock()
 concurrent_requests = 0
 
 
@@ -61,61 +62,59 @@ app.add_middleware(CorrelationIdMiddleware)
 ### API endpoints
 
 @app.get('/healthcheck')
-def healthcheck():
+async def healthcheck():
   return {"status": "ok"}
 
 
 @app.post('/detect')
-def detect(
+async def detect(
            access_token: str = Depends(auth),
            images: list[UploadFile] = File(...),
            details: DetectionDetails = Form(DetectionDetails.NONE)
           ):
   server_auth.check_authorized(access_token)
-  return with_concurrency_check(lambda: _detect(pipeline, images, details))
+  return await with_concurrency_check(_detect, images, details)
 
 
 
 ### Helper functions
 
 
-def with_concurrency_check(callable: Callable):
+async def with_concurrency_check(awaitable: Awaitable, /, *args, **kwargs):
   global concurrent_requests
-
-  if MAX_CONCURRENT_REQUESTS > 0:
-    with check_concurrency_lock:
-      if concurrent_requests < MAX_CONCURRENT_REQUESTS: 
-        concurrent_requests += 1
-      else: 
-        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS)
-      
+  concurrent_requests += 1
+  
   try:
-    return callable()
+    if concurrent_requests > MAX_CONCURRENT_REQUESTS > 0:
+      raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS)
+      
+    return await awaitable(*args, **kwargs)
   finally:
-    if MAX_CONCURRENT_REQUESTS > 0: concurrent_requests -= 1
+    concurrent_requests -= 1
 
 
-def _detect(pipeline: Callable, upload_files: list[UploadFile], details: DetectionDetails):
+async def _detect(upload_files: list[UploadFile], details: DetectionDetails):
   filenames = [urllib.parse.unquote(f.filename) for f in upload_files]
   server_logging.info(f'Processing files: {", ".join(filenames)}')
 
   try:
-    images = _read_request_images(upload_files)
-    detections = pipeline(images)
+    images = await _read_request_images(upload_files)
+    detections = await asyncio.to_thread(pipeline, images)
     return _detection_response(filenames, detections, details)
   except Exception as e:
     server_logging.log_exception(e)
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))
 
 
-def _read_request_images(upload_files: list[UploadFile]):
+async def _read_request_images(upload_files: list[UploadFile]):
   images = []
   for upload_file in upload_files:
     try:
-      content = upload_file.file.read()
-      images.append(read_image(content))
+      jpg_image = await upload_file.read()
+      decoded_image = await asyncio.to_thread(read_image, jpg_image)
+      images.append(decoded_image)
     finally:
-      upload_file.file.close()
+      await upload_file.close()
 
   return images
 
