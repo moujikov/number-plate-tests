@@ -23,3 +23,11 @@ class ImageDetectionWorkerTask(WorkerTask):
 
   async def execute_on(self, worker: Worker) -> any:
     return await worker.request("POST", self._path, self._form_data)
+  
+  def __str__(self):
+    if len(self._filenames) == 0:
+      return "(no images)"
+    elif len(self._filenames) == 1:
+      return self._filenames[0]
+    else:
+      return f"{', '.join(self._filenames)}"
