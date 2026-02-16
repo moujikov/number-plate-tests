@@ -1,6 +1,7 @@
 asyncio
 aiohttp
 fastapi
+orjson
 python-multipart
 uvicorn
 asgi-correlation-id

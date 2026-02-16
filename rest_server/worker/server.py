@@ -6,6 +6,7 @@ from typing import Callable
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import ORJSONResponse
 
 import common.logging as general_logging
 import rest_server.common.logging as server_logging
@@ -132,8 +133,11 @@ def _read_request_images(upload_files: list[UploadFile]):
 
 
 def _detection_response(filenames: list[str], detections: list, details: DetectionDetails):
-  return {"images": [_filter_image_detections(pair[0], pair[1], details) 
-                     for pair in zip(filenames, detections)]}
+  # Important to use 'ORJSONResponse' to marshal eventual NumPy numeric types in detection results
+  return ORJSONResponse({
+                         "images": [_filter_image_detections(pair[0], pair[1], details) 
+                                    for pair in zip(filenames, detections)]
+                        })
 
 
 def _filter_image_detections(image_name: str, image_detections: list, details: DetectionDetails):

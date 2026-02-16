@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --upgrade pip
 
-RUN pip install cython setuptools numpy opencv_python scikit_image asyncio gitpython pycocotools pillow tqdm matplotlib scipy seaborn ipywidgets gevent termcolor scikit-learn albumentations aiohttp fastapi python-multipart uvicorn asgi-correlation-id
+RUN pip install cython setuptools numpy opencv_python scikit_image asyncio gitpython pycocotools pillow tqdm matplotlib scipy seaborn ipywidgets gevent termcolor scikit-learn albumentations aiohttp fastapi orjson python-multipart uvicorn asgi-correlation-id
 
 RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install torchvision --index-url https://download.pytorch.org/whl/cpu
