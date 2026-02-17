@@ -8,13 +8,14 @@ services:
       - 8000:8000/tcp
     # volumes:
       # - /var/log/number-plates:/var/log/number-plates-scheduler
+    env_file: .env.scheduler
     environment:
-      TZ: ${TZ}
-      # ACCESS_TOKEN: "${SCHEDULER_ACCESS_TOKEN}"
       WORKER_URL_1: http://worker-1:8000
       WORKER_URL_2: http://worker-2:8000
       WORKER_URL_3: http://worker-3:8000
       WORKER_URL_4: http://worker-4:8000
+      WORKER_URL_5: http://worker-5:8000
+      WORKER_URL_6: http://worker-6:8000
     depends_on:
       worker-1:
         condition: service_healthy
@@ -24,6 +25,10 @@ services:
         condition: service_healthy
       worker-4:
         condition: service_healthy
+      worker-5:
+        condition: service_healthy
+      worker-6:
+        condition: service_healthy
 
   worker-1:
     container_name: worker-1
@@ -31,8 +36,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    environment:
-      TZ: ${TZ}
+    env_file: .env.worker
 
   worker-2:
     container_name: worker-2
@@ -40,8 +44,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    environment:
-      TZ: ${TZ}
+    env_file: .env.worker
   
   worker-3:
     container_name: worker-3
@@ -49,8 +52,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    environment:
-      TZ: ${TZ}
+    env_file: .env.worker
       
   worker-4:
     container_name: worker-4
@@ -58,5 +60,20 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    environment:
-      TZ: ${TZ}
+    env_file: .env.worker
+    
+  worker-5:
+    container_name: worker-5
+    image: moujikov/number-plates-worker
+    restart: unless-stopped
+    expose:
+      - 8000/tcp
+    env_file: .env.worker
+
+  worker-6:
+    container_name: worker-6
+    image: moujikov/number-plates-worker
+    restart: unless-stopped
+    expose:
+      - 8000/tcp
+    env_file: .env.worker

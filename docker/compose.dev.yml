@@ -8,10 +8,9 @@ services:
       - 8000:8000/tcp
     volumes:
       - ..:/app
+    env_file: .env.scheduler
     environment:
-      TZ: ${TZ}
       MODE: development
-      # ACCESS_TOKEN: "${SCHEDULER_ACCESS_TOKEN}"
       WORKER_URL_1: http://worker-1:8000
       WORKER_URL_2: http://worker-2:8000
       WORKER_URL_3: http://worker-3:8000
@@ -31,8 +30,8 @@ services:
       - 8000/tcp
     volumes:
       - ..:/app
+    env_file: .env.worker
     environment:
-      TZ: ${TZ}
       MODE: development
 
 
@@ -44,8 +43,8 @@ services:
       - 8000/tcp
     volumes:
       - ..:/app
+    env_file: .env.worker
     environment:
-      TZ: ${TZ}
       MODE: development
 
 
@@ -57,6 +56,6 @@ services:
       - 8000/tcp
     volumes:
       - ..:/app
+    env_file: .env.worker
     environment:
-      TZ: ${TZ}
       MODE: development
