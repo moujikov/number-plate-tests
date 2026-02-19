@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
 	cat <<'EOF'
-Usage: ./docker/run-scheduler.sh [--port <port>] [--token <token>] [--worker-port <port>] [--worker-token <token>] ...
+Usage: ./docker/scheduler/run.sh [--port <port>] [--token <token>] [--worker-port <port>] [--worker-token <token>] ...
 
 Options:
   --port, -p		    		Port to run the server on.
@@ -14,8 +14,8 @@ Options:
   --help, -h		    		Show this help
 
 Examples:
-  ./docker/run-scheduler.sh
-  ./docker/run-scheduler.sh --port 8000 --token _TOKEN12345
+  ./docker/scheduler/run.sh
+  ./docker/scheduler/run.sh --port 8000 --token _TOKEN12345
 EOF
 }
 

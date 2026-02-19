@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
 	cat <<'EOF'
-Usage: ./docker/run-worker.sh [--port <port>] [--token <token>] [--requests <requests>]
+Usage: ./docker/worker/run.sh [--port <port>] [--token <token>] [--requests <requests>]
 
 Options:
   --port, -p		    Port to run the server on.
@@ -14,9 +14,9 @@ Options:
   --help, -h		    Show this help
 
 Examples:
-  ./docker/run-worker.sh
-  ./docker/run-worker.sh --port 8000
-  ./docker/run-worker.sh --token _TOKEN12345 --requests 10 --countries ALL
+  ./docker/worker/run.sh
+  ./docker/worker/run.sh --port 8000
+  ./docker/worker/run.sh --token _TOKEN12345 --requests 10 --countries ALL
 EOF
 }
 
