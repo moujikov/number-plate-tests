@@ -8,7 +8,7 @@ services:
       - 8000:8000/tcp
     volumes:
       - ..:/app
-    env_file: .env.scheduler
+    env_file: scheduler/.env
     environment:
       MODE: development
       WORKER_URL_1: http://worker-1:8000
@@ -30,7 +30,7 @@ services:
       - 8000/tcp
     volumes:
       - ..:/app
-    env_file: .env.worker
+    env_file: worker/.env
     environment:
       MODE: development
 
@@ -43,7 +43,7 @@ services:
       - 8000/tcp
     volumes:
       - ..:/app
-    env_file: .env.worker
+    env_file: worker/.env
     environment:
       MODE: development
 
@@ -56,6 +56,6 @@ services:
       - 8000/tcp
     volumes:
       - ..:/app
-    env_file: .env.worker
+    env_file: worker/.env
     environment:
       MODE: development

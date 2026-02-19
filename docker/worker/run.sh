@@ -75,6 +75,7 @@ done
 
 
 docker run --rm -t \
+	--env-file ./docker/worker/.env \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
 	-v .:/app \
 	-p ${PORT}:${PORT} \

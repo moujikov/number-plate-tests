@@ -8,7 +8,7 @@ services:
       - 8000:8000/tcp
     # volumes:
       # - /var/log/number-plates:/var/log/number-plates-scheduler
-    env_file: .env.scheduler
+    env_file: scheduler/.env
     environment:
       WORKER_URL_1: http://worker-1:8000
       WORKER_URL_2: http://worker-2:8000
@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    env_file: .env.worker
+    env_file: worker/.env
 
   worker-2:
     container_name: worker-2
@@ -44,7 +44,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    env_file: .env.worker
+    env_file: worker/.env
   
   worker-3:
     container_name: worker-3
@@ -52,7 +52,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    env_file: .env.worker
+    env_file: worker/.env
       
   worker-4:
     container_name: worker-4
@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    env_file: .env.worker
+    env_file: worker/.env
     
   worker-5:
     container_name: worker-5
@@ -68,7 +68,7 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    env_file: .env.worker
+    env_file: worker/.env
 
   worker-6:
     container_name: worker-6
@@ -76,4 +76,4 @@ services:
     restart: unless-stopped
     expose:
       - 8000/tcp
-    env_file: .env.worker
+    env_file: worker/.env
