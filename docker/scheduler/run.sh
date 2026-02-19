@@ -2,12 +2,14 @@
 
 set -euo pipefail
 
+PORT=8000
+
 usage() {
-	cat <<'EOF'
+	cat <<EOF
 Usage: ./docker/scheduler/run.sh [--port <port>] [--token <token>] [--worker-port <port>] [--worker-token <token>] ...
 
 Options:
-  --port, -p		    		Port to run the server on.
+  --port, -p		    		Port to run the server on (default: ${PORT}).
   --token, -t		    		Access token for authentication.
 	--worker-port, -wp		Add worker runnning locally on the specified port (repeatable).
 	--worker-token, -wt		Add worker access token for authentication (repeat for each worker).
@@ -15,23 +17,20 @@ Options:
 
 Examples:
   ./docker/scheduler/run.sh
-  ./docker/scheduler/run.sh --port 8000 --token _TOKEN12345
+  ./docker/scheduler/run.sh --port 8001 --token _TOKEN12345
 EOF
 }
 
 DOCKER_ENV_PARAMS=()
-PORT=8000
 url_id=0
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
 		--port|-p)
-			DOCKER_ENV_PARAMS+=( -e "PORT=${2:-}" )
 			PORT="${2:-}"
 			shift 2
 			;;
 		--port=*)
-			DOCKER_ENV_PARAMS+=( -e "PORT=${1#*=}" )
 			PORT="${1#*=}"
 			shift
 			;;
@@ -74,6 +73,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+DOCKER_ENV_PARAMS+=( -e "PORT=${PORT}" )
 
 docker run --rm -t \
 	--env-file ./docker/scheduler/.env \
