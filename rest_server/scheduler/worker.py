@@ -80,4 +80,4 @@ class Worker:
     
   @property
   def full_str(self):
-    return f"#{self._id} (url: {self._url})"
+    return f"#{self._id} ({self._url})"

@@ -6,9 +6,10 @@ import asgi_correlation_id
 from fastapi import Request
 
 stream_handler = logging.StreamHandler()
-stream_handler.addFilter(asgi_correlation_id.CorrelationIdFilter(uuid_length=8))
+stream_handler.addFilter(asgi_correlation_id.CorrelationIdFilter(uuid_length=4))
 stream_handler.setFormatter(logging.Formatter(
-  "%(asctime)s [%(correlation_id)s] %(levelname)s - %(message)s"))
+  fmt = "%(asctime)s [%(correlation_id)s] %(levelname)s - %(message)s",
+  datefmt='%Y-%m-%d %H:%M:%S'))
 
 logger = logging.getLogger("__name__")
 logger.setLevel(logging.INFO)
