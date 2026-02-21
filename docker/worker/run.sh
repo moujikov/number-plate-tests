@@ -81,6 +81,6 @@ DOCKER_ENV_PARAMS+=(
 docker run --rm -t \
 	--env-file ./docker/worker/.env \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-	-v .:/app \
-	-p ${PORT}:${PORT} \
+	--volume .:/app \
+	--publish ${PORT}:${PORT} \
 	moujikov/number-plates-worker

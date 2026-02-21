@@ -78,7 +78,7 @@ DOCKER_ENV_PARAMS+=( -e "PORT=${PORT}" )
 docker run --rm -t \
 	--env-file ./docker/scheduler/.env \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-	-v .:/app \
-	-p ${PORT}:${PORT} \
+	--volume .:/app \
+	--publish ${PORT}:${PORT} \
 	--add-host host.docker.internal:host-gateway \
 	moujikov/number-plates-scheduler
