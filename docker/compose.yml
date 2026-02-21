@@ -34,46 +34,34 @@ services:
     container_name: worker-1
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     env_file: worker/.env
 
   worker-2:
     container_name: worker-2
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     env_file: worker/.env
   
   worker-3:
     container_name: worker-3
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     env_file: worker/.env
       
   worker-4:
     container_name: worker-4
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     env_file: worker/.env
     
   worker-5:
     container_name: worker-5
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     env_file: worker/.env
 
   worker-6:
     container_name: worker-6
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     env_file: worker/.env

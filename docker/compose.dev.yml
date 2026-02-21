@@ -26,8 +26,6 @@ services:
     container_name: worker-1
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     volumes:
       - ..:/app
     env_file: worker/.env
@@ -39,8 +37,6 @@ services:
     container_name: worker-2
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     volumes:
       - ..:/app
     env_file: worker/.env
@@ -52,8 +48,6 @@ services:
     container_name: worker-3
     image: moujikov/number-plates-worker
     restart: unless-stopped
-    expose:
-      - 8000/tcp
     volumes:
       - ..:/app
     env_file: worker/.env
