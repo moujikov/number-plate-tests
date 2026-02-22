@@ -1,6 +1,6 @@
 FROM alpine:3.23
 
-RUN apk add --no-cache tzdata
+RUN apk update && apk add --no-cache tzdata
 ENV TZ=Europe/Moscow
 
 RUN apk add --no-cache bash proftpd

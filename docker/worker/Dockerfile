@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN <<EOF
+    echo "--> Installing general system dependencies"
     set -ex -o pipefail
 
     apt-get update 
@@ -26,17 +27,28 @@ RUN <<EOF
     rm -rf /var/lib/apt/lists/*
 EOF
 
-RUN pip install --upgrade pip
+RUN <<EOF
+    echo "--> Installing number plates recognition AI dependencies"
+    set -ex -o pipefail
 
-RUN pip install cython setuptools numpy opencv_python scikit_image asyncio gitpython pycocotools pillow tqdm matplotlib scipy seaborn ipywidgets gevent termcolor scikit-learn albumentations aiohttp fastapi orjson python-multipart uvicorn asgi-correlation-id
+    pip install --upgrade pip
+    pip install torch --index-url https://download.pytorch.org/whl/cpu
+    pip install torchvision --index-url https://download.pytorch.org/whl/cpu
+    pip install ultralytics --no-deps 
+    pip install pytorch_lightning --no-deps
 
-RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
-RUN pip install torchvision --index-url https://download.pytorch.org/whl/cpu
-RUN pip install ultralytics --no-deps 
-RUN pip install pytorch_lightning --no-deps
+    pip install git+https://github.com/moujikov/ria-com_nomeroff-net.git
+EOF
 
-RUN pip install git+https://github.com/lilohuang/PyTurboJPEG.git
-RUN pip install git+https://github.com/moujikov/ria-com_nomeroff-net.git
+RUN <<EOF
+    echo "--> Installing worker's own Python dependencies"
+    set -ex -o pipefail
+
+    pip install \
+        aiohttp asgi-correlation-id asyncio fastapi orjson python-multipart uvicorn
+
+    pip install git+https://github.com/lilohuang/PyTurboJPEG.git
+EOF
 
 
 WORKDIR /app

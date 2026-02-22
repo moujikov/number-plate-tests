@@ -6,13 +6,25 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN <<EOF
+    echo "--> Installing general system dependencies"
+    set -ex -o pipefail
 
-RUN pip install --upgrade pip
-RUN pip install asyncio aiohttp fastapi python-multipart uvicorn asgi-correlation-id
+    apt-get update 
+    apt-get install -y --no-install-recommends curl
+
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+EOF
+
+RUN <<EOF
+    echo "--> Installing scheduler's own Python dependencies"
+    set -ex -o pipefail
+
+    pip install --upgrade pip
+    pip install \
+        aiohttp asgi-correlation-id asyncio fastapi python-multipart uvicorn
+EOF
 
 
 WORKDIR /app
