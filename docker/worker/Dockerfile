@@ -6,15 +6,25 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    git \
-    libglib2.0-0 \
-    libgl1 \
-    libturbojpeg0 \
-    curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN <<EOF
+    set -ex -o pipefail
+
+    apt-get update 
+    apt-get install -y --no-install-recommends \
+        build-essential libglib2.0-0 libgl1 git wget curl gpg
+    
+    wget -q -O- https://packagecloud.io/dcommander/libjpeg-turbo/gpgkey | \
+        gpg --dearmor >/etc/apt/trusted.gpg.d/libjpeg-turbo.gpg
+    wget -q -P /etc/apt/sources.list.d/ \
+        https://raw.githubusercontent.com/libjpeg-turbo/repo/main/libjpeg-turbo.list
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        libjpeg-turbo-official
+
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+EOF
 
 RUN pip install --upgrade pip
 
