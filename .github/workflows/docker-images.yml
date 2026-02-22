@@ -25,10 +25,12 @@ jobs:
           fetch-depth: 0 # This fetches the entire history and all tags
       - name: Save common images data
         id: images_data
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
         run: |
-            version=${$(git describe --tags --abbrev=0)#v}    # remove leading 'v' from the tag
+            version=$(git describe --tags --abbrev=0 | sed 's/^v//')    # removing leading 'v'
             echo "version=$version" >> "$GITHUB_OUTPUT"
-            echo "build=$version-build.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "build=$version-build.$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
 
 
   build_push_ftp:
