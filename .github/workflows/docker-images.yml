@@ -26,7 +26,7 @@ jobs:
       - name: Save common images data
         id: images_data
         run: |
-            version=$(git describe --tags --abbrev=0)
+            version=${$(git describe --tags --abbrev=0)#v}    # remove leading 'v' from the tag
             echo "version=$version" >> "$GITHUB_OUTPUT"
             echo "build=$version-build.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
 
