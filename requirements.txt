@@ -1,10 +1,9 @@
-asyncio
 aiohttp
+asgi-correlation-id
+asyncio
 fastapi
-orjson
 python-multipart
 uvicorn
-asgi-correlation-id
 
 PyTurboJPEG  @ git+https://github.com/lilohuang/PyTurboJPEG.git
 nomeroff_net @ git+https://github.com/moujikov/ria-com_nomeroff-net.git

@@ -1,14 +1,12 @@
 import asyncio
 from collections.abc import Awaitable
 import os
+from typing import Collection
 import urllib
-from threading import Lock
-from typing import Callable
 
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
-from fastapi.responses import ORJSONResponse
 
 import common.logging as general_logging
 import rest_server.common.logging as server_logging
@@ -57,7 +55,7 @@ async def log_request(request: Request, call_next):
   return await server_logging.log_request(request, call_next)
 
 app.add_middleware(CorrelationIdMiddleware)
-
+  
 
 ### API endpoints
 
@@ -78,7 +76,6 @@ async def detect(
 
 
 ### Helper functions
-
 
 async def with_concurrency_check(awaitable: Awaitable, /, *args, **kwargs):
   global concurrent_requests
@@ -120,11 +117,8 @@ async def _read_request_images(upload_files: list[UploadFile]):
 
 
 def _detection_response(filenames: list[str], detections: list, details: DetectionDetails):
-  # Important to use 'ORJSONResponse' to marshal eventual NumPy numeric types in detection results
-  return ORJSONResponse({
-                         "images": [_filter_image_detections(pair[0], pair[1], details) 
-                                    for pair in zip(filenames, detections)]
-                        })
+  return {"images": [_filter_image_detections(pair[0], pair[1], details) 
+                     for pair in zip(filenames, detections)]}
 
 
 def _filter_image_detections(image_name: str, image_detections: list, details: DetectionDetails):
@@ -134,27 +128,27 @@ def _filter_image_detections(image_name: str, image_detections: list, details: D
   # image = image_detections[0]
   detections = list(zip(*image_detections[1:]))  # skip image itself
   for detection in detections:
-    bbox = detection[0]
-    point = detection[1]
-    # zone = detection[2]
-    # region_id = detection[3]
-    region_name = detection[4]
-    count_line = detection[5]
-    confidence = detection[6]
+    # expected order of 'detection' elements: [bbox, point, zone, region_id, region_name, count_line, confidence, text]
+
+    box = __int_points(detection[1])
+    region = detection[4]
+    lines = detection[5]
     text = detection[7]
+    confidences = {"box": round(float(detection[0][4]), 6)}
+    if DETECT_COUNTRIES != 'RU':
+      confidences["region"] = round(float(detection[6][0]), 6)
 
     if details == DetectionDetails.FULL:
       filtered_detections.append({
-        "bbox": bbox,
-        "point": point,
-        "region_name": region_name,
-        "count_line": count_line,
+        "box": box,
+        "region": region,
+        "lines": lines,
         "text": text,
-        "confidence": confidence,
+        "confidences": confidences
       })
     elif details == DetectionDetails.REGION:
       filtered_detections.append({
-        "region_name": region_name,
+        "region": region,
         "text": text
       })
     else:
@@ -164,3 +158,9 @@ def _filter_image_detections(image_name: str, image_detections: list, details: D
           "image": image_name,
           "detections": filtered_detections
          }
+
+def __int_points(points: Collection):
+  if isinstance(points, Collection):
+    return [__int_points(x) for x in points]
+  
+  return round(points)

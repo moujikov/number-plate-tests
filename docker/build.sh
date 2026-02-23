@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-./docker/build-ftp.sh
-./docker/build-scheduler.sh
-./docker/build-worker.sh
+./docker/ftp/build.sh
+./docker/scheduler/build.sh
+./docker/worker/build.sh

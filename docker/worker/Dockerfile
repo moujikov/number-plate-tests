@@ -45,7 +45,7 @@ RUN <<EOF
     set -ex -o pipefail
 
     pip install \
-        aiohttp asgi-correlation-id asyncio fastapi orjson python-multipart uvicorn
+        aiohttp asgi-correlation-id asyncio fastapi python-multipart uvicorn
 
     pip install git+https://github.com/lilohuang/PyTurboJPEG.git
 EOF
