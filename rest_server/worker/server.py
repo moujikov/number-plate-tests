@@ -13,10 +13,7 @@ import rest_server.common.logging as server_logging
 import rest_server.common.auth as server_auth
 from common.data import DetectionDetails
 from image_processing.jpeg import read_image
-from image_processing.pipelines import ( pipeline,
-                                         setup_full_pipeline, 
-                                         setup_ru_by_pipeline, 
-                                         setup_ru_pipeline )
+import image_processing.pipelines as pipelines
 
 
 ### Configuration from environment variables
@@ -27,20 +24,9 @@ if MAX_CONCURRENT_REQUESTS > 0:
 
 
 ### Preloading models to avoid first request latency
-DETECT_COUNTRIES = os.getenv('DETECT_COUNTRIES', 'RU').upper()
-if DETECT_COUNTRIES == 'ALL':
-  general_logging.info('Preloading models for ALL number plate types...')
-  setup_full_pipeline()
-elif DETECT_COUNTRIES == 'RU_BY':
-  general_logging.info('Preloading models for RU and BY number plates...')
-  setup_ru_by_pipeline()
-elif DETECT_COUNTRIES == 'RU':
-  general_logging.info('Preloading models for RU number plates...')
-  setup_ru_pipeline()
-else:
-  general_logging.error(
-    f'Unknown value for DETECT_COUNTRIES: {DETECT_COUNTRIES}. '
-    f'Supported values are: ALL, RU_BY, RU.')
+DETECT_COUNTRIES = os.getenv('DETECT_COUNTRIES', 'RU')
+detect_countries = [pipelines.DetectCountry(c.strip().upper()) for c in DETECT_COUNTRIES.split(',')]
+pipelines.setup_pipeline(detect_countries)
 
 
 ### FastAPI app
@@ -96,7 +82,7 @@ async def _detect(upload_files: list[UploadFile], details: DetectionDetails):
 
   try:
     images = await _read_request_images(upload_files)
-    detections = await asyncio.to_thread(pipeline, images)
+    detections = await asyncio.to_thread(pipelines.pipeline, images)
     return _detection_response(filenames, detections, details)
   except Exception as e:
     server_logging.log_exception(e)
@@ -130,29 +116,22 @@ def _filter_image_detections(image_name: str, image_detections: list, details: D
   for detection in detections:
     # expected order of 'detection' elements: [bbox, point, zone, region_id, region_name, count_line, confidence, text]
 
-    box = __int_points(detection[1])
-    region = detection[4]
-    lines = detection[5]
-    text = detection[7]
-    confidences = {"box": round(float(detection[0][4]), 6)}
-    if DETECT_COUNTRIES != 'RU':
-      confidences["region"] = round(float(detection[6][0]), 6)
+    filtered_detection = {}
+
+    if details == DetectionDetails.FULL or details == DetectionDetails.CONFIDENCE:
+      confidences = {"box": round(float(detection[0][4]), 6)}
+      if len(pipelines.configured_countries) > 1:
+        confidences["region"] = round(float(detection[6][0]), 6)
+      filtered_detection["confidences"] = confidences
 
     if details == DetectionDetails.FULL:
-      filtered_detections.append({
-        "box": box,
-        "region": region,
-        "lines": lines,
-        "text": text,
-        "confidences": confidences
-      })
-    elif details == DetectionDetails.REGION:
-      filtered_detections.append({
-        "region": region,
-        "text": text
-      })
-    else:
-      filtered_detections.append({"text": text})
+      filtered_detection["box"] = __int_points(detection[1])
+
+    if len(pipelines.configured_countries) > 1:
+      filtered_detection["region"] = detection[4]
+    
+    filtered_detection["text"] = detection[7]
+    filtered_detections.append(filtered_detection)
 
   return {
           "image": image_name,

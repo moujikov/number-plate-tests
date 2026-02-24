@@ -3,5 +3,5 @@ from enum import Enum
 
 class DetectionDetails(str, Enum):
   FULL = "full"
-  REGION = "region"
+  CONFIDENCE = "confidence"
   NONE = "none"

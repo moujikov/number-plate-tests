@@ -1,5 +1,5 @@
 import time
-from image_processing.pipelines import setup_full_pipeline, pipeline
+from image_processing.pipelines import DetectCountry, pipeline, setup_pipeline
 from image_processing.jpeg import read_local_images
 
 failed = False
@@ -68,7 +68,7 @@ tests = [
 ]
 
 print(f'Downloading models:')
-setup_full_pipeline()  # Preload models
+setup_pipeline(DetectCountry.ALL)  # Preload all models
 
 start_time = time.perf_counter()
 print(f'Running self-check tests:')

@@ -1,6 +1,19 @@
-from collections.abc import Callable
+from enum import Enum
+from typing import Callable, Sequence
 from threading import Lock
+
 from nomeroff_net import pipeline as __pipeline
+
+from common import logging
+
+
+class DetectCountry(str, Enum):
+  ALL = "ALL"
+  RU = "RU"; BY = "BY"; AM = "AM"; GE = "GE"; KZ = "KZ"; KG = "KG"; UA = "UA"; EU = "EU"
+
+
+ALL_COUNTRIES = [DetectCountry.RU, DetectCountry.BY, DetectCountry.AM, DetectCountry.GE, 
+                 DetectCountry.KZ, DetectCountry.KG, DetectCountry.UA, DetectCountry.EU]
 
 
 class LockablePipeline(Callable):
@@ -17,21 +30,26 @@ class LockablePipeline(Callable):
 
 
 __cached_pipeline: LockablePipeline | None = None
+configured_countries: list[DetectCountry] | None = None
 
 
-def setup_full_pipeline():
-  global __cached_pipeline
-  __cached_pipeline = LockablePipeline(__create_full_pipeline())
-  __cached_pipeline([]) # Preload models to avoid first request latency
+def setup_pipeline(countries: Sequence[DetectCountry] | DetectCountry):
+  global __cached_pipeline, configured_countries
 
-def setup_ru_by_pipeline():
-  global __cached_pipeline
-  __cached_pipeline = LockablePipeline(__create_ru_by_pipeline())
-  __cached_pipeline([]) # Preload models to avoid first request latency
+  if not countries:
+    raise ValueError("Countries list cannot be empty")
+  
+  if isinstance(countries, Sequence):
+    configured_countries = countries
+  else:
+    configured_countries = [countries]
+    
+  if DetectCountry.ALL in configured_countries:
+    configured_countries = ALL_COUNTRIES
 
-def setup_ru_pipeline():
-  global __cached_pipeline
-  __cached_pipeline = LockablePipeline(__create_ru_pipeline())
+  logging.info(
+    f'Preloading models for {', '.join([c.value for c in configured_countries])} number plate types...')
+  __cached_pipeline = LockablePipeline(__create_pipeline(configured_countries))
   __cached_pipeline([]) # Preload models to avoid first request latency
 
 
@@ -41,95 +59,65 @@ def pipeline(inputs, **kwargs):
   return __cached_pipeline(inputs, **kwargs)
 
 
-def __create_full_pipeline():
+
+def __create_pipeline(countries: list[DetectCountry]):
+  classes = __number_plate_classes(countries)
+
+  presets = dict()
+  for country in countries:
+    presets[__ocr_model(country)] = {
+      "for_regions": __country_classes(country),
+      "for_count_lines": [1],
+      "model_path": "latest"
+    }
+
   return __pipeline("number_plate_detection_and_reading",
-    presets={
-      "ru": {
-          "for_regions": ["ru"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      },
-      "by": {
-          "for_regions": ["by"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      },
-      "am": {
-          "for_regions": ["am"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      },
-      "ge": {
-          "for_regions": ["ge"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      },
-      "kz": {
-          "for_regions": ["kz"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      },
-      "kg": {
-          "for_regions": ["kg"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      },
-      "eu_ua_2004_2015_efficientnet_b2": {
-          "for_regions": ["eu_ua_2004", "eu_ua_2015"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      },
-      "eu_efficientnet_b2": {
-          "for_regions": ["eu", "xx_unknown"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      }
-    },
+    presets = presets,
     classification_options = {
-      "class_region": ["ru", "by", "am", "ge", "kz", "kg", "eu_ua_2004", "eu_ua_2015", "eu_ua_1995"],
+      "class_region": classes,
       "count_lines": [1]
     },
-    default_label="ru",
-    default_lines_count=1,
-    upscaling=False,
-    off_number_plate_classification=False
+    default_label = classes[0],
+    default_lines_count = 1,
+    upscaling = False,
+    off_number_plate_classification = (len(classes) == 1)
     )
 
-def __create_ru_by_pipeline():
-  return __pipeline("number_plate_detection_and_reading",
-    presets={
-      "ru": {
-          "for_regions": ["ru"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      },
-      "by": {
-          "for_regions": ["by"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      }
-    },
-    classification_options = {
-      "class_region": ["ru", "by"],
-      "count_lines": [1]
-    },
-    default_label="ru",
-    default_lines_count=1,
-    upscaling=False,
-    off_number_plate_classification=False
-    )
+def __number_plate_classes(countries: list[DetectCountry]):
+  return [region for country in countries for region in __country_classes(country)]
 
-def __create_ru_pipeline():
-  return __pipeline("number_plate_detection_and_reading",
-    presets={
-      "ru": {
-          "for_regions": ["ru"],
-          "for_count_lines": [1],
-          "model_path": "latest"
-      }
-    },
-    default_label="ru",
-    default_lines_count=1,
-    upscaling=False,
-    off_number_plate_classification=True
-    )
+def __country_classes(country: DetectCountry):  
+  if country == DetectCountry.RU:
+    return ["ru"]
+  elif country == DetectCountry.BY:
+    return ["by"]
+  elif country == DetectCountry.AM:
+    return ["am"]
+  elif country == DetectCountry.GE:
+    return ["ge"]
+  elif country == DetectCountry.KZ:
+    return ["kz"]
+  elif country == DetectCountry.KG:
+    return ["kg"]
+  elif country == DetectCountry.UA:
+    return ["eu_ua_2004", "eu_ua_2015"]
+  elif country == DetectCountry.EU:
+    return ["eu"]
+  
+def __ocr_model(country: DetectCountry):  
+  if country == DetectCountry.RU:
+    return "ru"
+  elif country == DetectCountry.BY:
+    return "by"
+  elif country == DetectCountry.AM:
+    return "am"
+  elif country == DetectCountry.GE:
+    return "ge"
+  elif country == DetectCountry.KZ:
+    return "kz"
+  elif country == DetectCountry.KG:
+    return "kg"
+  elif country == DetectCountry.UA:
+    return "eu_ua_2004_2015_efficientnet_b2"
+  elif country == DetectCountry.EU:
+    return "eu_efficientnet_b2"

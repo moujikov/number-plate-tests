@@ -14,12 +14,12 @@ Options:
   --port, -p        Port to run the server on (default: ${PORT}).
   --token, -t       Access token for authentication.
   --requests, -r    Maximum number of concurrent requests (default: ${REQUESTS}).
-  --countries, -c   Supported countries (default: ${COUNTRIES}; options: RU_BY, ALL).
+  --countries, -c   Supported countries (default: ${COUNTRIES}; options: ALL | RU,BY,AM...).
   --help, -h        Show this help
 
 Examples:
   ./docker/worker/run.sh
-  ./docker/worker/run.sh --port 8001
+  ./docker/worker/run.sh --port 8001 --countries RU,BY,AM,GE
   ./docker/worker/run.sh --token _TOKEN12345 --requests 10 --countries ALL
 EOF
 }
