@@ -54,7 +54,7 @@ DOCKER_ENV_PARAMS+=( -e "FTP_USER_2=camera-2" -e "FTP_PASSWORD_2=password2" )
 PASSIVE_PORTS="30001-30005"
 DOCKER_ENV_PARAMS+=( -e "PASSIVE_PORTS=${PASSIVE_PORTS}" )
 
-docker run --rm -t \
+docker run --rm -t --name number-plates-ftp \
 	--env-file ./docker/ftp/.env \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
 	--volume ./docker/ftp/proftpd.conf:/etc/proftpd/proftpd.conf \

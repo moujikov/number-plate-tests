@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN <<EOF
-    echo "--> Installing general system dependencies"
+    echo "--> Install general system dependencies"
     set -ex -o pipefail
 
     apt-get update 
@@ -28,7 +28,7 @@ RUN <<EOF
 EOF
 
 RUN <<EOF
-    echo "--> Installing number plates recognition AI dependencies"
+    echo "--> Install number plates recognition AI dependencies"
     set -ex -o pipefail
 
     pip install --upgrade pip
@@ -41,7 +41,7 @@ RUN <<EOF
 EOF
 
 RUN <<EOF
-    echo "--> Installing worker's own Python dependencies"
+    echo "--> Install worker's own Python dependencies"
     set -ex -o pipefail
 
     pip install \
@@ -59,6 +59,15 @@ COPY self_check self_check
 
 # Preload all necessary models and check basic detection functionality
 RUN python -m self_check
+
+RUN <<EOF
+    echo "--> Disable all further updates, metrics and error reporting"
+    set -ex -o pipefail
+
+    yolo settings hub=False > /dev/null
+    yolo settings sync=False > /dev/null
+EOF
+ENV NO_ALBUMENTATIONS_UPDATE=1
 
 COPY rest_server/common rest_server/common
 COPY rest_server/worker rest_server/worker

@@ -78,7 +78,7 @@ DOCKER_ENV_PARAMS+=(
 	-e "DETECT_COUNTRIES=${COUNTRIES}" \
 	-e "MAX_CONCURRENT_REQUESTS=${REQUESTS}" )
 
-docker run --rm -t \
+docker run --rm -t --name number-plates-worker \
 	--env-file ./docker/worker/.env \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
 	--volume .:/app \

@@ -75,7 +75,7 @@ done
 
 DOCKER_ENV_PARAMS+=( -e "PORT=${PORT}" )
 
-docker run --rm -t \
+docker run --rm -t --name number-plates-scheduler \
 	--env-file ./docker/scheduler/.env \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
 	--volume .:/app \
