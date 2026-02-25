@@ -15,9 +15,13 @@ while IFS='=' read -r -d '' user_var login; do
       exit 1
     fi
 
-    echo "Setting up FTP user: $login"
+    if id "$login" >/dev/null 2>&1; then
+      echo "FTP user $login already exists"
+    else
+      echo "Adding FTP user $login"
+      adduser -u 100${id} -G ftp -s /sbin/nologin -h "/home/$login" -D "$login"
+    fi
 
-    adduser -u 100${id} -G ftp -s /sbin/nologin -h "/home/$login" -D "$login"
     echo "$login:$password" | chpasswd > /dev/null 2>&1
 
     mkdir -p "/home/$login/upload"
@@ -28,6 +32,7 @@ while IFS='=' read -r -d '' user_var login; do
 done < <(env -0)
 
 config='/etc/proftpd/conf.d/runtime.conf'
+> $config
 
 if [[ -n "${PORT:-}" ]]; then
   echo "Setting FTP server port: ${PORT}"

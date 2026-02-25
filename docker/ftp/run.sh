@@ -47,8 +47,8 @@ done
 DOCKER_ENV_PARAMS+=( -e "PORT=${PORT}" )
 
 # Add mock users
-DOCKER_ENV_PARAMS+=( -e "FTP_USER_1=camera-1" -e "FTP_PASSWORD_1=password1" )
-DOCKER_ENV_PARAMS+=( -e "FTP_USER_2=camera-2" -e "FTP_PASSWORD_2=password2" )
+DOCKER_ENV_PARAMS+=( -e "FTP_USER_1=camera-1" -e "FTP_PASSWORD_1=pass1" )
+DOCKER_ENV_PARAMS+=( -e "FTP_USER_2=camera-2" -e "FTP_PASSWORD_2=pass2" )
 
 # Add test passive ports range
 PASSIVE_PORTS="30001-30005"

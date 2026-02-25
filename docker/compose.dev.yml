@@ -1,4 +1,23 @@
 services:
+  ftp-server:
+    container_name: ftp-server
+    image: moujikov/number-plates-ftp
+    restart: unless-stopped
+    ports:
+      - 21:21/tcp
+      - 30001-30005:30001-30005/tcp
+    volumes:
+      - ./ftp/proftpd.conf:/etc/proftpd/proftpd.conf
+      - ./ftp/entrypoint.sh:/entrypoint.sh
+      - ../_data/ftp_users:/home
+      - ../_data/ftp_logs:/var/log/proftpd
+    env_file: ftp/.env
+    environment:
+      - PASSIVE_PORTS=30001-30005
+      - FTP_USER_1=camera-1
+      - FTP_PASSWORD_1=pass1
+      - FTP_USER_2=camera-2
+      - FTP_PASSWORD_2=pass2
 
   scheduler:
     container_name: scheduler

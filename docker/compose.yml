@@ -1,5 +1,12 @@
 services:
 
+  ftp-server:
+    container_name: ftp-server
+    image: moujikov/number-plates-ftp
+    restart: unless-stopped
+    network_mode: host
+    env_file: ftp/.env
+
   scheduler:
     container_name: scheduler
     image: moujikov/number-plates-scheduler
