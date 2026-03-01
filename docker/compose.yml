@@ -11,6 +11,25 @@ services:
       - logs_ftp-server:/var/log/proftpd
     env_file: ftp/.env
 
+  database:
+    container_name: database
+    image: postgres:18-alpine
+    restart: unless-stopped
+    env_file: database/.env
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      start_interval: 1s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
   scheduler:
     container_name: scheduler
     image: moujikov/number-plates-scheduler
