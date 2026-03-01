@@ -1,10 +1,14 @@
-services:
+name: number-plates
 
+services:
   ftp-server:
     container_name: ftp-server
     image: moujikov/number-plates-ftp
     restart: unless-stopped
     network_mode: host
+    volumes:
+      - cameras:/home
+      - logs_ftp-server:/var/log/proftpd
     env_file: ftp/.env
 
   scheduler:
@@ -13,8 +17,6 @@ services:
     restart: unless-stopped
     ports:
       - 8000:8000/tcp
-    # volumes:
-      # - /var/log/number-plates:/var/log/number-plates-scheduler
     env_file: scheduler/.env
     environment:
       WORKER_URL_1: http://worker-1:8000
@@ -72,3 +74,8 @@ services:
     image: moujikov/number-plates-worker
     restart: unless-stopped
     env_file: worker/.env
+
+volumes:
+  database:
+  cameras:
+  logs_ftp-server:

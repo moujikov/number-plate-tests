@@ -59,8 +59,8 @@ docker run --rm -t --name number-plates-ftp \
 	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
 	--volume ./docker/ftp/proftpd.conf:/etc/proftpd/proftpd.conf \
 	--volume ./docker/ftp/entrypoint.sh:/entrypoint.sh \
-	--volume ./_data/ftp_users:/home \
-	--volume ./_data/ftp_logs:/var/log/proftpd \
+	--volume number-plates_cameras:/home \
+	--volume number-plates_logs_ftp-server:/var/log/proftpd \
 	--publish ${PORT}:${PORT} \
 	--publish ${PASSIVE_PORTS}:${PASSIVE_PORTS} \
 	moujikov/number-plates-ftp

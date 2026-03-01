@@ -1,3 +1,5 @@
+name: number-plates
+
 services:
   ftp-server:
     container_name: ftp-server
@@ -9,8 +11,8 @@ services:
     volumes:
       - ./ftp/proftpd.conf:/etc/proftpd/proftpd.conf
       - ./ftp/entrypoint.sh:/entrypoint.sh
-      - ../_data/ftp_users:/home
-      - ../_data/ftp_logs:/var/log/proftpd
+      - cameras:/home
+      - logs_ftp-server:/var/log/proftpd
     env_file: ftp/.env
     environment:
       - PASSIVE_PORTS=30001-30005
@@ -32,13 +34,10 @@ services:
       MODE: development
       WORKER_URL_1: http://worker-1:8000
       WORKER_URL_2: http://worker-2:8000
-      WORKER_URL_3: http://worker-3:8000
     depends_on:
       worker-1:
         condition: service_healthy
       worker-2:
-        condition: service_healthy
-      worker-3:
         condition: service_healthy
 
   worker-1:
@@ -51,7 +50,6 @@ services:
     environment:
       MODE: development
 
-
   worker-2:
     container_name: worker-2
     image: moujikov/number-plates-worker
@@ -62,13 +60,7 @@ services:
     environment:
       MODE: development
 
-
-  worker-3:
-    container_name: worker-3
-    image: moujikov/number-plates-worker
-    restart: unless-stopped
-    volumes:
-      - ..:/app
-    env_file: worker/.env
-    environment:
-      MODE: development
+volumes:
+  database:
+  cameras:
+  logs_ftp-server:
