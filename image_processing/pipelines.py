@@ -4,7 +4,7 @@ from threading import Lock
 
 from nomeroff_net import pipeline as __pipeline
 
-from common import logging
+from common.logging import logger
 
 
 class DetectCountry(str, Enum):
@@ -47,7 +47,7 @@ def setup_pipeline(countries: Sequence[DetectCountry] | DetectCountry):
   if DetectCountry.ALL in configured_countries:
     configured_countries = ALL_COUNTRIES
 
-  logging.info(
+  logger.info(
     f'Preloading models for {', '.join([c.value for c in configured_countries])} number plate types...')
   __cached_pipeline = LockablePipeline(__create_pipeline(configured_countries))
   __cached_pipeline([]) # Preload models to avoid first request latency

@@ -7,8 +7,9 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.security import OAuth2PasswordBearer
 from asgi_correlation_id import CorrelationIdMiddleware
 
-import rest_server.common.logging as server_logging
-import rest_server.common.auth as server_auth
+from rest_server.common.logging import logger as server_logger
+from rest_server.common.logging import log_request as log_server_request
+from rest_server.common.auth import check_authorized
 from common.data import DetectionDetails
 from .task import ImageDetectionWorkerTask
 from .pool import RoundRobinWorkersPool, WorkersPoolConfigurator
@@ -36,7 +37,7 @@ auth = OAuth2PasswordBearer(tokenUrl="access_token", auto_error=False)
 ### Middlewares for logging requests
 @app.middleware("http")
 async def log_request(request: Request, call_next):
-  return await server_logging.log_request(request, call_next)
+  return await log_server_request(request, call_next)
 
 app.add_middleware(CorrelationIdMiddleware)
 
@@ -54,7 +55,7 @@ async def detect_all(
               images: list[UploadFile] = File(...),
               details: DetectionDetails = Form(DetectionDetails.NONE)
               ):
-  server_auth.check_authorized(access_token)
+  check_authorized(access_token)
   return await forward_request("detect", images, details)
 
 
@@ -63,7 +64,7 @@ async def detect_all(
 
 async def forward_request(path: str, upload_files: list[UploadFile], details: DetectionDetails):
   filenames = [urllib.parse.unquote(f.filename) for f in upload_files]
-  server_logging.info(f'Processing files: {", ".join(filenames)}')
+  server_logger.info(f'Processing files: {", ".join(filenames)}')
 
   try:
     async with asyncio.TaskGroup() as tg:
@@ -88,5 +89,5 @@ async def forward_request(path: str, upload_files: list[UploadFile], details: De
     return {"images": results}
 
   except Exception as e:
-    server_logging.log_exception(e)
+    server_logger.log_exception(e)
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))

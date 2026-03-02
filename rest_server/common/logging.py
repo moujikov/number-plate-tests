@@ -17,10 +17,6 @@ logger.addHandler(stream_handler)
 logger.propagate = False
 
 
-def info(message: str):
-  logger.info(message)
-
-
 async def log_request(request: Request, call_next):
   if request.url.path != "/healthcheck":
     logger.info(f"Processing request: {request.method} {request.url.path} from {request.client.host}")

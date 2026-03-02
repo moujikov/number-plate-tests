@@ -2,8 +2,8 @@ import os
 import time
 from asyncio import Event, Queue
 
-import common.logging as general_logging
-import rest_server.common.logging as server_logging
+from common.logging import logger as general_logger
+from rest_server.common.logging import logger as server_logger
 from .task import WorkerTask
 from .worker import Worker
 
@@ -17,7 +17,7 @@ class WorkersPool:
     self._workers.append(worker)
 
   async def close(self):
-    general_logging.info(f"Closing all workers in the pool")
+    general_logger.info(f"Closing all workers in the pool")
     for worker in self._workers:
       await worker.close()
 
@@ -28,7 +28,7 @@ class WorkersPool:
       started = time.perf_counter()
       result = await task.execute_on(worker)
       waited = time.perf_counter() - started
-      server_logging.info(f"After {waited:.2f}s got results from worker {worker.short_str} for {task}")
+      server_logger.info(f"After {waited:.2f}s got results from worker {worker.short_str} for {task}")
       return result
     finally:
       self.__free_worker(worker) if worker else None
@@ -36,7 +36,7 @@ class WorkersPool:
   async def _take_worker(self, task: WorkerTask) -> Worker:
     worker = self.__find_free_worker(task)
     if worker:
-      server_logging.info(f"Using worker {worker.full_str} for {task}")
+      server_logger.info(f"Using worker {worker.full_str} for {task}")
       worker.set_busy()
       return worker
 
@@ -48,11 +48,11 @@ class WorkersPool:
   def __free_worker(self, worker: Worker):
     if not self._queue.empty():
       promise = self._queue.get_nowait()
-      server_logging.info(
+      server_logger.info(
         f"Passing freed worker {worker.short_str} to {promise.task}")
       promise.fulfill(worker)
     else:
-      server_logging.info(f"Returning worker {worker.short_str} to the pool")
+      server_logger.info(f"Returning worker {worker.short_str} to the pool")
       worker.set_free()
     
   def __find_free_worker(self, task: WorkerTask) -> Worker | None:
@@ -82,11 +82,11 @@ class WorkerPromise:
 
   async def wait_worker(self) -> Worker:
     started = time.perf_counter()
-    server_logging.info(f"Waiting for worker for {self.task}...")
+    server_logger.info(f"Waiting for worker for {self.task}...")
     await self.__event.wait()
 
     waited = time.perf_counter() - started
-    server_logging.info(
+    server_logger.info(
       f"After {waited:.2f}s got worker {self.__worker.full_str} for {self.task}")
 
     return self.__worker
@@ -114,7 +114,7 @@ class WorkersPoolConfigurator:
 
   def _add_worker(self, id: int, url: str, token: str):
     worker = Worker(id, url, token if token else None)
-    general_logging.info(
+    general_logger.info(
                         f"Adding worker {worker.full_str}"
                         f"{' with access token' if token else ''} to the pool"
                         )

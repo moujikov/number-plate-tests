@@ -8,9 +8,10 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
 
-import common.logging as general_logging
-import rest_server.common.logging as server_logging
-import rest_server.common.auth as server_auth
+from common.logging import logger as general_logger
+from rest_server.common.logging import logger as server_logger
+from rest_server.common.logging import log_request as log_server_request
+from rest_server.common.auth import check_authorized
 from common.data import DetectionDetails
 from image_processing.jpeg import read_image
 import image_processing.pipelines as pipelines
@@ -20,7 +21,7 @@ import image_processing.pipelines as pipelines
 
 MAX_CONCURRENT_REQUESTS = int(os.getenv('MAX_CONCURRENT_REQUESTS', 0))
 if MAX_CONCURRENT_REQUESTS > 0:
-  general_logging.info(f'Setting max concurrent requests to {MAX_CONCURRENT_REQUESTS}.')
+  general_logger.info(f'Setting max concurrent requests to {MAX_CONCURRENT_REQUESTS}.')
 
 
 ### Preloading models to avoid first request latency
@@ -38,7 +39,7 @@ concurrent_requests = 0
 ### Middlewares for logging requests
 @app.middleware("http")
 async def log_request(request: Request, call_next):
-  return await server_logging.log_request(request, call_next)
+  return await log_server_request(request, call_next)
 
 app.add_middleware(CorrelationIdMiddleware)
   
@@ -56,7 +57,7 @@ async def detect(
            images: list[UploadFile] = File(...),
            details: DetectionDetails = Form(DetectionDetails.NONE)
           ):
-  server_auth.check_authorized(access_token)
+  check_authorized(access_token)
   return await with_concurrency_check(_detect, images, details)
 
 
@@ -78,14 +79,14 @@ async def with_concurrency_check(awaitable: Awaitable, /, *args, **kwargs):
 
 async def _detect(upload_files: list[UploadFile], details: DetectionDetails):
   filenames = [urllib.parse.unquote(f.filename) for f in upload_files]
-  server_logging.info(f'Processing files: {", ".join(filenames)}')
+  server_logger.info(f'Processing files: {", ".join(filenames)}')
 
   try:
     images = await _read_request_images(upload_files)
     detections = await asyncio.to_thread(pipelines.pipeline, images)
     return _detection_response(filenames, detections, details)
   except Exception as e:
-    server_logging.log_exception(e)
+    server_logger.log_exception(e)
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))
 
 
