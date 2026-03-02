@@ -50,7 +50,7 @@ async def healthcheck():
 
 
 @app.post('/detect')
-async def detect_all(
+async def detect(
               access_token: str = Depends(auth),
               images: list[UploadFile] = File(...),
               details: DetectionDetails = Form(DetectionDetails.NONE)
