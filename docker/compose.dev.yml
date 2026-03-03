@@ -21,6 +21,23 @@ services:
       - FTP_USER_2=camera-2
       - FTP_PASSWORD_2=pass2
 
+  processor:
+    container_name: processor
+    image: moujikov/number-plates-processor
+    restart: unless-stopped
+    volumes:
+      - ..:/app
+      - cameras:/var/local/cameras
+      - images:/var/local/images
+    env_file: processor/.env
+    environment:
+      PYTHONDEVMODE: 1
+      LOG_LEVEL: DEBUG
+      PROCESS_AT_ONCE: 3
+    depends_on:
+      database:
+        condition: service_healthy
+
   database:
     container_name: database
     image: postgres:18-alpine
@@ -82,4 +99,5 @@ services:
 volumes:
   database:
   cameras:
+  images:
   logs_ftp-server:

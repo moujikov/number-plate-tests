@@ -1,4 +1,6 @@
+aiofiles
 aiohttp
+aioshutil
 asgi-correlation-id
 asyncio
 fastapi

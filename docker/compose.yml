@@ -11,6 +11,18 @@ services:
       - logs_ftp-server:/var/log/proftpd
     env_file: ftp/.env
 
+  processor:
+    container_name: processor
+    image: moujikov/number-plates-processor
+    restart: unless-stopped
+    volumes:
+      - cameras:/var/local/cameras
+      - images:/var/local/images
+    env_file: processor/.env
+    depends_on:
+      database:
+        condition: service_healthy
+
   database:
     container_name: database
     image: postgres:18-alpine
@@ -97,4 +109,5 @@ services:
 volumes:
   database:
   cameras:
+  images:
   logs_ftp-server:
