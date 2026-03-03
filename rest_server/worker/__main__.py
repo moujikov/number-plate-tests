@@ -1,10 +1,11 @@
-import os
 import uvicorn
+
+from . import HOST, PORT
 from .server import app
 
 uvicorn.run(app,
-            host=os.getenv('BIND', '0.0.0.0'),
-            port=int(os.getenv('PORT', '8000')),
+            host=HOST,
+            port=PORT,
             server_header=False,
             access_log=False,
             reload=False)

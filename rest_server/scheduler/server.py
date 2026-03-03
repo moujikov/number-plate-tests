@@ -7,8 +7,7 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.security import OAuth2PasswordBearer
 from asgi_correlation_id import CorrelationIdMiddleware
 
-from rest_server.common.logging import logger as server_logger
-from rest_server.common.logging import log_request as log_server_request
+from rest_server.common.logging import logger, log_request
 from rest_server.common.auth import check_authorized
 from common.data import DetectionDetails
 from .task import ImageDetectionWorkerTask
@@ -36,8 +35,8 @@ auth = OAuth2PasswordBearer(tokenUrl="access_token", auto_error=False)
 
 ### Middlewares for logging requests
 @app.middleware("http")
-async def log_request(request: Request, call_next):
-  return await log_server_request(request, call_next)
+async def request_logging_middleware(request: Request, call_next):
+  return await log_request(request, call_next)
 
 app.add_middleware(CorrelationIdMiddleware)
 
@@ -64,7 +63,7 @@ async def detect(
 
 async def forward_request(path: str, upload_files: list[UploadFile], details: DetectionDetails):
   filenames = [urllib.parse.unquote(f.filename) for f in upload_files]
-  server_logger.info(f'Processing files: {", ".join(filenames)}')
+  logger.info(f'Processing files: {", ".join(filenames)}')
 
   try:
     async with asyncio.TaskGroup() as tg:
@@ -89,5 +88,5 @@ async def forward_request(path: str, upload_files: list[UploadFile], details: De
     return {"images": results}
 
   except Exception as e:
-    server_logger.log_exception(e)
+    logger.log_exception(e)
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))

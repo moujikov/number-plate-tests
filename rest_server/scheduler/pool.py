@@ -3,7 +3,7 @@ import time
 from asyncio import Event, Queue
 
 from common.logging import logger as general_logger
-from rest_server.common.logging import logger as server_logger
+from rest_server.common.logging import logger as logger
 from .task import WorkerTask
 from .worker import Worker
 
@@ -28,7 +28,7 @@ class WorkersPool:
       started = time.perf_counter()
       result = await task.execute_on(worker)
       waited = time.perf_counter() - started
-      server_logger.info(f"After {waited:.2f}s got results from worker {worker.short_str} for {task}")
+      logger.info(f"After {waited:.2f}s got results from worker {worker.short_str} for {task}")
       return result
     finally:
       self.__free_worker(worker) if worker else None
@@ -36,7 +36,7 @@ class WorkersPool:
   async def _take_worker(self, task: WorkerTask) -> Worker:
     worker = self.__find_free_worker(task)
     if worker:
-      server_logger.info(f"Using worker {worker.full_str} for {task}")
+      logger.info(f"Using worker {worker.full_str} for {task}")
       worker.set_busy()
       return worker
 
@@ -48,11 +48,11 @@ class WorkersPool:
   def __free_worker(self, worker: Worker):
     if not self._queue.empty():
       promise = self._queue.get_nowait()
-      server_logger.info(
+      logger.info(
         f"Passing freed worker {worker.short_str} to {promise.task}")
       promise.fulfill(worker)
     else:
-      server_logger.info(f"Returning worker {worker.short_str} to the pool")
+      logger.info(f"Returning worker {worker.short_str} to the pool")
       worker.set_free()
     
   def __find_free_worker(self, task: WorkerTask) -> Worker | None:
@@ -82,11 +82,11 @@ class WorkerPromise:
 
   async def wait_worker(self) -> Worker:
     started = time.perf_counter()
-    server_logger.info(f"Waiting for worker for {self.task}...")
+    logger.info(f"Waiting for worker for {self.task}...")
     await self.__event.wait()
 
     waited = time.perf_counter() - started
-    server_logger.info(
+    logger.info(
       f"After {waited:.2f}s got worker {self.__worker.full_str} for {self.task}")
 
     return self.__worker
