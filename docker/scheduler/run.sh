@@ -21,7 +21,7 @@ Examples:
 EOF
 }
 
-DOCKER_ENV_PARAMS=( -e "MODE=development" )
+DOCKER_ENV_PARAMS=( -e "PYTHONDEVMODE=1" )
 url_id=0
 
 while [[ $# -gt 0 ]]; do

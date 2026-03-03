@@ -24,7 +24,7 @@ Examples:
 EOF
 }
 
-DOCKER_ENV_PARAMS=( -e "MODE=development" )
+DOCKER_ENV_PARAMS=( -e "PYTHONDEVMODE=1" )
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

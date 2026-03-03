@@ -1,5 +1,3 @@
-from .settings import development_mode
-from .logging import logger
+import os
 
-if development_mode:
-  logger.debug('Running in development mode.')
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()

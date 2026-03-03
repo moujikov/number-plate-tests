@@ -1,8 +1,9 @@
 import logging
-from .settings import development_mode
+from . import LOG_LEVEL
+
 
 logging.basicConfig(
-  level=(logging.DEBUG if development_mode else logging.INFO),
+  level=LOG_LEVEL,
   format="%(asctime)s %(levelname)s - %(message)s",
   datefmt='%Y-%m-%d %H:%M:%S')
 

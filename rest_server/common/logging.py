@@ -5,6 +5,8 @@ import traceback
 import asgi_correlation_id
 from fastapi import Request
 
+from common import LOG_LEVEL
+
 stream_handler = logging.StreamHandler()
 stream_handler.addFilter(asgi_correlation_id.CorrelationIdFilter(uuid_length=4))
 stream_handler.setFormatter(logging.Formatter(
@@ -12,7 +14,7 @@ stream_handler.setFormatter(logging.Formatter(
   datefmt='%Y-%m-%d %H:%M:%S'))
 
 logger = logging.getLogger("__name__")
-logger.setLevel(logging.INFO)
+logger.setLevel(LOG_LEVEL)
 logger.addHandler(stream_handler)
 logger.propagate = False
 
