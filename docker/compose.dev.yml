@@ -32,6 +32,7 @@ services:
     env_file: processor/.env
     environment:
       PYTHONDEVMODE: 1
+      PYTHONASYNCIODEBUG: 1
       LOG_LEVEL: DEBUG
       PROCESS_AT_ONCE: 3
     depends_on:
