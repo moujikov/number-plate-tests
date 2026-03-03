@@ -7,7 +7,7 @@ COUNTRIES="RU"
 REQUESTS=1
 
 usage() {
-	cat <<EOF
+  cat <<EOF
 Usage: ./docker/worker/run.sh [--port <port>] [--token <token>] [--requests <requests>] [--countries <countries>]
 
 Options:
@@ -24,26 +24,26 @@ Examples:
 EOF
 }
 
-DOCKER_ENV_PARAMS=()
+DOCKER_ENV_PARAMS=( -e "MODE=development" )
 
 while [[ $# -gt 0 ]]; do
-	case "$1" in
-		--port|-p)
-			PORT="${2:-}"
-			shift 2
-			;;
-		--port=*)
-			PORT="${1#*=}"
-			shift
-			;;
-		--token|-t)
-			DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${2:-}" )
-			shift 2
-			;;
-		--token=*)
-			DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${1#*=}" )
-			shift
-			;;
+  case "$1" in
+    --port|-p)
+      PORT="${2:-}"
+      shift 2
+      ;;
+    --port=*)
+      PORT="${1#*=}"
+      shift
+      ;;
+    --token|-t)
+      DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${2:-}" )
+      shift 2
+      ;;
+    --token=*)
+      DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${1#*=}" )
+      shift
+      ;;
     --requests|-r)
       REQUESTS="${2:-}"
       shift 2
@@ -52,35 +52,35 @@ while [[ $# -gt 0 ]]; do
       REQUESTS="${1#*=}"
       shift
       ;;
-		--countries|-c)
-			COUNTRIES="${2:-}"
+    --countries|-c)
+      COUNTRIES="${2:-}"
       shift 2
       ;;
     --countries=*)
       COUNTRIES="${1#*=}"
       shift
       ;;
-		--help|-h)
-			usage
-			exit 0
-			;;
-		*)
-			echo "Unknown argument: $1" >&2
-			usage
-			exit 1
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage
+      exit 1
       shift
-			;;
-	esac
+      ;;
+  esac
 done
 
 DOCKER_ENV_PARAMS+=( 
-	-e "PORT=${PORT}" \
-	-e "DETECT_COUNTRIES=${COUNTRIES}" \
-	-e "MAX_CONCURRENT_REQUESTS=${REQUESTS}" )
+  -e "PORT=${PORT}" \
+  -e "DETECT_COUNTRIES=${COUNTRIES}" \
+  -e "MAX_CONCURRENT_REQUESTS=${REQUESTS}" )
 
 docker run --rm -t --name number-plates-worker \
-	--env-file ./docker/worker/.env \
-	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-	--volume .:/app \
-	--publish ${PORT}:${PORT} \
-	moujikov/number-plates-worker
+  --env-file ./docker/worker/.env \
+  ${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
+  --volume .:/app \
+  --publish ${PORT}:${PORT} \
+  moujikov/number-plates-worker
