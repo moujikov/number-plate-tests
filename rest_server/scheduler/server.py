@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.security import OAuth2PasswordBearer
 from asgi_correlation_id import CorrelationIdMiddleware
 
-from rest_server.common.logging import logger, log_request
+from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
 from common.data import DetectionDetails
 from .task import ImageDetectionWorkerTask
@@ -85,8 +85,9 @@ async def forward_request(path: str, upload_files: list[UploadFile], details: De
           "error": result
         })
 
+    logger.debug(f'Returning detection results: {", ".join([str(r) for r in results])}')
     return {"images": results}
 
   except Exception as e:
-    logger.log_exception(e)
+    log_exception(e)
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))

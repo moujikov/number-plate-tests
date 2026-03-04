@@ -7,7 +7,7 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
 
-from rest_server.common.logging import logger, log_request
+from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
 from common.data import DetectionDetails
 from image_processing.jpeg import read_image
@@ -78,7 +78,7 @@ async def _detect(upload_files: list[UploadFile], details: DetectionDetails):
     detections = await asyncio.to_thread(pipelines.pipeline, images)
     return _detection_response(filenames, detections, details)
   except Exception as e:
-    logger.log_exception(e)
+    log_exception(e)
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))
 
 
@@ -96,8 +96,10 @@ async def _read_request_images(upload_files: list[UploadFile]):
 
 
 def _detection_response(filenames: list[str], detections: list, details: DetectionDetails):
-  return {"images": [_filter_image_detections(pair[0], pair[1], details) 
-                     for pair in zip(filenames, detections)]}
+  results = [_filter_image_detections(pair[0], pair[1], details) 
+             for pair in zip(filenames, detections)]
+  logger.debug(f'Returning detection results: {", ".join([str(r) for r in results])}')
+  return {"images": results}
 
 
 def _filter_image_detections(image_name: str, image_detections: list, details: DetectionDetails):
