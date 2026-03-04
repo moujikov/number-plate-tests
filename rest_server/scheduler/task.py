@@ -1,3 +1,4 @@
+import io
 from aiohttp import FormData
 from common.data import DetectionDetails
 from .worker import Worker
@@ -15,9 +16,11 @@ class ImageDetectionWorkerTask(WorkerTask):
     self._form_data = FormData()
     self._form_data.add_field("details", details)
 
-  def add_image(self, filename: str, content_type: str, content: bytes):
+  def add_image(self, filename: str, content_type: str, contents: bytes):
     self._filenames.append(filename)
-    self._form_data.add_field("images", content, 
+    # Sending a large body directly with raw bytes might lock the event loop
+    data_stream = io.BytesIO(contents)  # Passing io.BytesIO instead
+    self._form_data.add_field("images", data_stream, 
                                filename = filename, 
                                content_type = content_type)
 
