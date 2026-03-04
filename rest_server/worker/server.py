@@ -71,7 +71,7 @@ async def with_concurrency_check(awaitable: Awaitable, /, *args, **kwargs):
 
 async def _detect(upload_files: list[UploadFile], details: DetectionDetails):
   filenames = [urllib.parse.unquote(f.filename) for f in upload_files]
-  logger.info(f'Processing files: {", ".join(filenames)}')
+  logger.debug(f'Processing files: {", ".join(filenames)}')
 
   try:
     images = await _read_request_images(upload_files)
@@ -104,6 +104,7 @@ def _detection_response(filenames: list[str], detections: list, details: Detecti
 
 def _filter_image_detections(image_name: str, image_detections: list, details: DetectionDetails):
   filtered_detections = []
+  detected_number_plates = []
 
   # expected 'image_detections' structure: [image, [bboxes], [points], etc... , [texts]]
   # image = image_detections[0]
@@ -126,8 +127,10 @@ def _filter_image_detections(image_name: str, image_detections: list, details: D
       filtered_detection["region"] = detection[4]
     
     filtered_detection["text"] = detection[7]
+    detected_number_plates.append(detection[7])
     filtered_detections.append(filtered_detection)
 
+  logger.info(f'Image {image_name} detections: {", ".join(detected_number_plates)}')
   return {
           "image": image_name,
           "detections": filtered_detections

@@ -80,6 +80,7 @@ async def forward_request(path: str, upload_files: list[UploadFile], details: De
       if "images" in result:
         results.extend(result["images"])
       else:
+        logger.warning(f'Image {task.get_name()} detection failure: {result}')
         results.append({
           "image": task.get_name(), 
           "error": result
