@@ -1,5 +1,8 @@
-from datetime import datetime
 import os
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from .. import TZ
 
 
 class InputImage:
@@ -7,7 +10,9 @@ class InputImage:
     self.camera = camera
     self.path = image.path
     self.name = image.name
-    self.timestamp = datetime.fromtimestamp(image.stat().st_mtime)
+    self.timestamp = datetime.fromtimestamp(
+      timestamp = image.stat().st_mtime, 
+      tz = ZoneInfo(TZ))
 
   @property
   def date_str(self) -> str:
