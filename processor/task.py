@@ -6,7 +6,8 @@ import uuid
 
 from common.logging import logger
 from . import CAMERAS_DIR, IMAGES_DIR
-from .image import InputImage
+from .models.image import InputImage
+from .models.detection import Detection
 from .session import SchedulerSession
 
 
@@ -28,20 +29,23 @@ class DetectionTask(Task):
     if 'images' in results:
       number_plates = self.extract_number_plates(results)
       if number_plates is not None:
-        logger.info(f'Extracted number plates for {self._image.full_name} – {number_plates}')
+        logger.info(f'Image {self._image.full_name} detections: {", ".join(number_plates)}')
+        file_name = await self.move_to_processed()
+        for number_plate in number_plates:
+          detection = Detection(
+                                timestamp = self._image.timestamp,
+                                number_plate = number_plate,
+                                region = 'RU',
+                                camera = self._image.camera,
+                                image = file_name
+                                )
+          await detection.save()
 
-
-        date_subdir = self._image.date_str
-        date_subdir_file = os.path.join(date_subdir, f'{uuid.uuid4()}.jpg')
-
-        await aio_os.makedirs(os.path.join(IMAGES_DIR, date_subdir), exist_ok=True)
-        await aioshutil.move(self._image.path, os.path.join(IMAGES_DIR, date_subdir_file))
-        logger.info(f'Processed {self._image.full_name}, saved to {date_subdir_file}')
       else:
-        logger.warning(f'Unexpected detection results for {self._image.full_name} – {results}')
+        logger.warning(f'Image {self._image.full_name} unexpected results: {results}')
         await self.move_to_failed()
     else:
-      logger.warning(f'Detection failed for {self._image.full_name} – {results}')
+      logger.warning(f'Image {self._image.full_name} detection failure: {results}')
       await self.move_to_failed()
 
 
@@ -62,7 +66,18 @@ class DetectionTask(Task):
       
     return number_plates
 
+
+  async def move_to_processed(self) -> str:
+    date_subdir = self._image.date_str
+    date_subdir_file = os.path.join(date_subdir, f'{uuid.uuid4()}.jpg')
+
+    await aio_os.makedirs(os.path.join(IMAGES_DIR, date_subdir), exist_ok=True)
+    await aioshutil.move(self._image.path, os.path.join(IMAGES_DIR, date_subdir_file))
+    logger.info(f'Processed {self._image.full_name}, saved to {date_subdir_file}')
+
+    return date_subdir_file
     
+
   async def move_to_failed(self):
     failed_dir = os.path.join(CAMERAS_DIR, self._image.camera, 'failed')
     await aio_os.makedirs(failed_dir, exist_ok=True)

@@ -12,7 +12,7 @@ RUN <<EOF
 
     pip install --upgrade pip
     pip install \
-        aiofiles aiohttp aioshutil asyncio python-multipart
+        aiofiles aiohttp aioshutil asyncio python-multipart tortoise-orm[asyncpg]
 EOF
 
 

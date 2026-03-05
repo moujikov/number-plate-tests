@@ -5,6 +5,7 @@ asgi-correlation-id
 asyncio
 fastapi
 python-multipart
+tortoise-orm[asyncpg]
 uvicorn
 
 PyTurboJPEG  @ git+https://github.com/lilohuang/PyTurboJPEG.git
