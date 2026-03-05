@@ -47,6 +47,7 @@ services:
     restart: unless-stopped
     env_file: database/.env
     volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - database:/var/lib/postgresql
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
