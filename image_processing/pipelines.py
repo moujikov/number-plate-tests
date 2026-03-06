@@ -116,21 +116,21 @@ def __country_classes(country: DetectCountry):
 
 def __region_for_country_class(class_name: str):  
   if class_name == "ru":
-    return DetectCountry.RU
+    return DetectCountry.RU.value
   elif class_name == "by":
-    return DetectCountry.BY
+    return DetectCountry.BY.value
   elif class_name == "am":
-    return DetectCountry.AM
+    return DetectCountry.AM.value
   elif class_name == "ge":
-    return DetectCountry.GE
+    return DetectCountry.GE.value
   elif class_name == "kz":
-    return DetectCountry.KZ
+    return DetectCountry.KZ.value
   elif class_name == "kg":
-    return DetectCountry.KG
+    return DetectCountry.KG.value
   elif class_name == "eu_ua_2004" or class_name == "eu_ua_2015":
-    return DetectCountry.UA
+    return DetectCountry.UA.value
   elif class_name == "eu":
-    return DetectCountry.EU
+    return DetectCountry.EU.value
   else:
     return class_name
 
