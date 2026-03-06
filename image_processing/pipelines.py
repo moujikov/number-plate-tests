@@ -56,7 +56,17 @@ def setup_pipeline(countries: Sequence[DetectCountry] | DetectCountry):
 def pipeline(inputs, **kwargs):
   if __cached_pipeline is None:
     raise Exception("Pipeline is not initialized")
-  return __cached_pipeline(inputs, **kwargs)
+  detections = __cached_pipeline(inputs, **kwargs)
+  try:
+    for detection in detections:
+      if len(detection) > 5:
+        regions = detection[5]
+        for i in range(len(regions)):
+          regions[i] = __region_for_country_class(regions[i])
+  except IndexError:
+    pass
+
+  return detections
 
 
 
@@ -103,7 +113,27 @@ def __country_classes(country: DetectCountry):
     return ["eu_ua_2004", "eu_ua_2015"]
   elif country == DetectCountry.EU:
     return ["eu"]
-  
+
+def __region_for_country_class(class_name: str):  
+  if class_name == "ru":
+    return DetectCountry.RU
+  elif class_name == "by":
+    return DetectCountry.BY
+  elif class_name == "am":
+    return DetectCountry.AM
+  elif class_name == "ge":
+    return DetectCountry.GE
+  elif class_name == "kz":
+    return DetectCountry.KZ
+  elif class_name == "kg":
+    return DetectCountry.KG
+  elif class_name == "eu_ua_2004" or class_name == "eu_ua_2015":
+    return DetectCountry.UA
+  elif class_name == "eu":
+    return DetectCountry.EU
+  else:
+    return class_name
+
 def __ocr_model(country: DetectCountry):  
   if country == DetectCountry.RU:
     return "ru"

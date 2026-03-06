@@ -62,7 +62,7 @@ tests = [
   {
     "file" : "ua.jpg", 
     "number_plate": "BX5100HA",
-    "region": "EU_UA_2015",
+    "region": "UA",
     "country": "UA"
   }
 ]
@@ -75,7 +75,7 @@ print(f'Running self-check tests:')
 
 for test in tests:
   detections = pipeline(read_local_images(f'self_check/test_images/{test["file"]}'))
-  region = detections[0][5][0].upper()
+  region = detections[0][5][0]
   number_plate = detections[0][8][0]
 
   country = test["country"]
