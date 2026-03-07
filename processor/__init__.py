@@ -9,6 +9,9 @@ logger.info(f'Checking for new images every {CHECK_PERIOD}ms')
 PROCESS_AT_ONCE = int(os.getenv('PROCESS_AT_ONCE', 20))
 logger.info(f'Processing at most {PROCESS_AT_ONCE} images at once')
 
+IGNORE_PERIOD = int(os.getenv('IGNORE_PERIOD', 60))
+logger.info(f'Ignoring detections seen within the last {IGNORE_PERIOD} seconds')
+
 CAMERAS_DIR = os.getenv('CAMERAS_DIR')
 if CAMERAS_DIR:
   logger.info(f'Watching for new images in {CAMERAS_DIR}')

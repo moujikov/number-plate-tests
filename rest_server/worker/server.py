@@ -123,8 +123,7 @@ def _filter_image_detections(image_name: str, image_detections: list, details: D
     if details == DetectionDetails.FULL:
       filtered_detection["box"] = __int_points(detection[1])
 
-    if len(pipelines.configured_countries) > 1:
-      filtered_detection["region"] = detection[4]
+    filtered_detection["region"] = detection[4]
     
     filtered_detection["text"] = detection[7]
     detected_number_plates.append(detection[7])

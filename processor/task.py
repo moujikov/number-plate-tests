@@ -1,14 +1,21 @@
+from ast import pattern
 import os
-from aiofiles import os as aio_os
+import re
+import uuid
+from datetime import timedelta
+
 import aiofiles
 import aioshutil
-import uuid
+from aiofiles import os as aio_os
 
+from common.data import DetectCountry
 from common.logging import logger
-from . import CAMERAS_DIR, IMAGES_DIR
-from .image import InputImage
 from database.models import Detection
+
+from . import CAMERAS_DIR, IGNORE_PERIOD, IMAGES_DIR
+from .image import InputImage
 from .session import SchedulerSession
+
 
 
 class Task:
@@ -19,67 +26,119 @@ class DetectionTask(Task):
   def __init__(self, session: SchedulerSession, image: InputImage):
     self._session = session
     self._image = image
+    self.__processed_file_name = None
+
+  @property
+  def _processed_file_dir(self):
+    return self._image.date_str
+
+  @property
+  def _processed_file_name(self):
+    if not self.__processed_file_name:
+      self.__processed_file_name = os.path.join(self._processed_file_dir, f'{uuid.uuid4()}.jpg')
+
+    return self.__processed_file_name
+  
 
   async def fullfill(self):
     async with aiofiles.open(self._image.path, mode='rb') as file:
       contents = await file.read()
-    
+
     results = await self._session.detect(f'{self._image.full_name}', contents)
+    logger.debug(f'Image {self._image.full_name} detection results: {results}')
 
-    if 'images' in results:
-      number_plates = self.extract_number_plates(results)
-      if number_plates is not None:
-        logger.info(f'Image {self._image.full_name} detections: {", ".join(number_plates)}')
-        file_name = await self.move_to_processed()
-        for number_plate in number_plates:
-          detection = Detection(
-                                timestamp = self._image.timestamp,
-                                number_plate = number_plate,
-                                region = 'RU',
-                                camera = self._image.camera,
-                                image = file_name
-                                )
-          await detection.save()
+    try:
+      detections = self.__extract_detections(results)
+    except ValueError as e:
+      logger.warning(f'Image {self._image.full_name} invalid results: {e}')
+      await self.__move_to_failed()
+      return
 
-      else:
-        logger.warning(f'Image {self._image.full_name} unexpected results: {results}')
-        await self.move_to_failed()
-    else:
-      logger.warning(f'Image {self._image.full_name} detection failure: {results}')
-      await self.move_to_failed()
+    if not detections:
+      await self.__delete()
+      return
 
+    saved, invalid, repeated = [], [], []
 
-  def extract_number_plates(self, results: dict) -> list[str] | None:
-    if 'images' not in results: return None
-    results = results['images']
-    if not isinstance(results, list) or len(results) != 1: return None
-    results = results[0]
-    if 'detections' not in results: return None
-    detections = results['detections']
-    if not isinstance(detections, list): return None
-    number_plates = []
+    recent_detections = set(await Detection.filter(
+      timestamp__gte = self._image.timestamp - timedelta(seconds=IGNORE_PERIOD)
+      ).values_list('number_plate', flat=True))
+
     for detection in detections:
-      if 'text' not in detection: return None
-      text = detection['text']
-      if not isinstance(text, str): return None
-      number_plates.append(text)
+      if 'text' not in detection or 'region' not in detection:
+        logger.warning(f'Image {self._image.full_name} text/region missing in detection: {results}')
+        continue
+
+      text = str(detection['text'])
+      region = str(detection['region'])
+      box = str(detection['box']) if 'box' in detection else None
+
+      if text in recent_detections:
+        repeated.append(text)
+        continue
+
+      if not self.__check_valid(region, text):
+        invalid.append(text)
+        continue
+
+      detection = Detection(
+                            timestamp = self._image.timestamp,
+                            number_plate = text,
+                            region = region,
+                            box = box,
+                            camera = self._image.camera,
+                            image = self._processed_file_name
+                           )
+      await detection.save()
+      saved.append(text)
+
+    if saved: logger.info(f'Detections saved: {", ".join(saved)} ({self._image.full_name})')
+    if invalid: logger.info(f'Detections ignored: {", ".join(invalid)} ({self._image.full_name})')
+    if repeated: logger.info(f'Detections repeated: {", ".join(repeated)} ({self._image.full_name})')
+
+    if saved:
+      await self.__move_to_processed()
+    else:
+      await self.__delete()
+
+  Latin_letters = 'ABEKMHOPCTYX'
+  RU_pattern = rf'[{Latin_letters}]\d{{3}}[{Latin_letters}]{{2}}\d{{2,3}}'
+
+  def __check_valid(self, region: str, text: str) -> bool:
+    if region == DetectCountry.RU.value:
+      if re.fullmatch(self.RU_pattern, text): return True
       
-    return number_plates
+    return False
+
+  def __extract_detections(self, results: dict) -> list[dict] | None:
+    if 'images' not in results: 
+      raise ValueError(f'Missing "images" field: {results}')
+    results = results['images']
+    if not isinstance(results, list) or len(results) != 1: 
+      raise ValueError(f'Invalid "images" field: {results}')
+    results = results[0]
+    if 'detections' not in results:
+      raise ValueError(f'Missing "detections" field: {results}')
+    detections = results['detections']
+    if not isinstance(detections, list):
+      raise ValueError(f'Invalid "detections" field: {results}')
+
+    return detections
 
 
-  async def move_to_processed(self) -> str:
-    date_subdir = self._image.date_str
-    date_subdir_file = os.path.join(date_subdir, f'{uuid.uuid4()}.jpg')
+  async def __move_to_processed(self) -> str:
+    await aio_os.makedirs(os.path.join(IMAGES_DIR, self._processed_file_dir), exist_ok=True)
+    await aioshutil.move(self._image.path, os.path.join(IMAGES_DIR, self._processed_file_name))
+    logger.info(f'Processed {self._image.full_name}, saved to {self._processed_file_name}')
 
-    await aio_os.makedirs(os.path.join(IMAGES_DIR, date_subdir), exist_ok=True)
-    await aioshutil.move(self._image.path, os.path.join(IMAGES_DIR, date_subdir_file))
-    logger.info(f'Processed {self._image.full_name}, saved to {date_subdir_file}')
 
-    return date_subdir_file
-    
-
-  async def move_to_failed(self):
+  async def __move_to_failed(self):
     failed_dir = os.path.join(CAMERAS_DIR, self._image.camera, 'failed')
     await aio_os.makedirs(failed_dir, exist_ok=True)
     await aioshutil.move(self._image.path, os.path.join(failed_dir, self._image.name))
-    logger.info(f"Moved {self._image.full_name} to camera's failed images")
+    logger.warning(f"Moved {self._image.full_name} to camera's failed images")
+
+
+  async def __delete(self):
+    await aio_os.remove(self._image.path)
+    logger.debug(f"No detections to keep, deleted {self._image.full_name}")

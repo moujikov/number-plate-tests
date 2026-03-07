@@ -29,7 +29,7 @@ class SchedulerSession:
 
   async def detect(self, filename: str, contents: bytes) -> any:
     form_data = FormData()
-    form_data.add_field("details", DetectionDetails.NONE)
+    form_data.add_field("details", DetectionDetails.FULL)
     # Sending a large body directly with raw bytes might lock the event loop
     data_stream = io.BytesIO(contents)  # Passing io.BytesIO instead
     form_data.add_field("images", data_stream, 
