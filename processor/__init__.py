@@ -37,10 +37,3 @@ else:
 SCHEDULER_ACCESS_TOKEN = os.getenv('SCHEDULER_ACCESS_TOKEN') 
 if SCHEDULER_ACCESS_TOKEN:
   logger.info('Using scheduler access token from environment variable.')
-
-
-DATABASE_URL = os.getenv('DATABASE_URL') 
-if DATABASE_URL:
-  logger.info('Using database URL from environment variable.')
-else:
-  raise ValueError("DATABASE_URL environment variable is not set")

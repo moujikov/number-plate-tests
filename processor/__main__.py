@@ -3,17 +3,11 @@ import asyncio
 from tortoise import Tortoise
 
 from common.logging import logger
-from . import CHECK_PERIOD, DATABASE_URL
+from database import init_database, release_database
+from . import CHECK_PERIOD
 from .session import SchedulerSession
 from .processor import ImagesProcessor
 
-
-async def init_database():
-  await Tortoise.init(
-    db_url=DATABASE_URL,
-    modules={'models': ['processor.models.detection']}
-  )
-  await Tortoise.generate_schemas(safe=True)
 
 async def main_loop(interval, periodic_function):
   await init_database()
@@ -25,7 +19,7 @@ async def main_loop(interval, periodic_function):
     
 async def cleanup():
   await session.close()
-  await Tortoise.close_connections()
+  await release_database()
 
 
 session = SchedulerSession()

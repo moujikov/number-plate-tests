@@ -19,6 +19,7 @@ EOF
 WORKDIR /app
 
 COPY common common
+COPY database database
 COPY processor processor
 
 ENTRYPOINT ["python", "-m", "processor"]

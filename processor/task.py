@@ -7,7 +7,7 @@ import uuid
 from common.logging import logger
 from . import CAMERAS_DIR, IMAGES_DIR
 from .image import InputImage
-from .models.detection import Detection
+from database.models import Detection
 from .session import SchedulerSession
 
 
