@@ -34,6 +34,7 @@ services:
       PYTHONDEVMODE: 1
       PYTHONASYNCIODEBUG: 1
       LOG_LEVEL: DEBUG
+      # SYSTEM_LOG_LEVEL: DEBUG
       PROCESS_AT_ONCE: 3
     depends_on:
       database:
@@ -72,7 +73,8 @@ services:
     env_file: scheduler/.env
     environment:
       PYTHONDEVMODE: 1
-      # LOG_LEVEL: DEBUG
+      LOG_LEVEL: DEBUG
+      # SYSTEM_LOG_LEVEL: DEBUG
       WORKER_URL_1: http://worker-1:8000
       WORKER_URL_2: http://worker-2:8000
     depends_on:
@@ -90,7 +92,8 @@ services:
     env_file: worker/.env
     environment:
       PYTHONDEVMODE: 1
-      # LOG_LEVEL: DEBUG
+      LOG_LEVEL: DEBUG
+      # SYSTEM_LOG_LEVEL: DEBUG
 
   worker-2:
     container_name: worker-2
@@ -101,7 +104,8 @@ services:
     env_file: worker/.env
     environment:
       PYTHONDEVMODE: 1
-      # LOG_LEVEL: DEBUG
+      LOG_LEVEL: DEBUG
+      # SYSTEM_LOG_LEVEL: DEBUG
 
 volumes:
   database:
