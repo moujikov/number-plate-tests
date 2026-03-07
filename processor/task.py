@@ -6,7 +6,7 @@ import uuid
 
 from common.logging import logger
 from . import CAMERAS_DIR, IMAGES_DIR
-from .models.image import InputImage
+from .image import InputImage
 from .models.detection import Detection
 from .session import SchedulerSession
 

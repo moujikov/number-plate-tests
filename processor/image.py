@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from .. import TZ
+from common import TZ
 
 
 class InputImage:

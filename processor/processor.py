@@ -3,7 +3,7 @@ import os
 
 from common.logging import logger
 from . import CAMERAS_DIR, PROCESS_AT_ONCE
-from .models.image import InputImage
+from .image import InputImage
 from .session import SchedulerSession
 from .task import DetectionTask
 

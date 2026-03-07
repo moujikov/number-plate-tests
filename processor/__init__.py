@@ -2,8 +2,6 @@ import os
 
 from common.logging import logger
 
-TZ = os.getenv('TZ', 'UTC')
-logger.info(f'Using timezone {TZ}')
 
 CHECK_PERIOD = int(os.getenv('CHECK_PERIOD', 100))
 logger.info(f'Checking for new images every {CHECK_PERIOD}ms')
