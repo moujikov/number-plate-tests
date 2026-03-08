@@ -3,6 +3,7 @@ aiohttp
 aioshutil
 asgi-correlation-id
 asyncio
+durations
 fastapi
 python-multipart
 tortoise-orm[asyncpg]
