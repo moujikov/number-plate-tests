@@ -1,4 +1,3 @@
-from ast import pattern
 import os
 import re
 import uuid
@@ -59,10 +58,7 @@ class DetectionTask(Task):
       return
 
     saved, invalid, repeated = [], [], []
-
-    recent_detections = set(await Detection.filter(
-      timestamp__gte = self._image.timestamp - timedelta(seconds=IGNORE_PERIOD)
-      ).values_list('number_plate', flat=True))
+    recent = await self.__fetch_recent_detections()
 
     for detection in detections:
       if 'text' not in detection or 'region' not in detection:
@@ -73,7 +69,7 @@ class DetectionTask(Task):
       region = str(detection['region'])
       box = str(detection['box']) if 'box' in detection else None
 
-      if text in recent_detections:
+      if text in recent:
         repeated.append(text)
         continue
 
@@ -81,15 +77,7 @@ class DetectionTask(Task):
         invalid.append(text)
         continue
 
-      detection = Detection(
-                            timestamp = self._image.timestamp,
-                            number_plate = text,
-                            region = region,
-                            box = box,
-                            camera = self._image.camera,
-                            image = self._processed_file_name
-                           )
-      await detection.save()
+      await self.__save_detection(text, region, box)
       saved.append(text)
 
     if saved: logger.info(f'Detections saved: {", ".join(saved)} ({self._image.full_name})')
@@ -101,6 +89,24 @@ class DetectionTask(Task):
     else:
       await self.__delete()
 
+
+  async def __save_detection(self, number_plate: str, region: str, box: str = None):
+    detection = Detection(
+      timestamp = self._image.timestamp,
+      number_plate = number_plate,
+      region = region,
+      box = box,
+      camera = self._image.camera,
+      image = self._processed_file_name
+      )
+    await detection.save()
+
+
+  async def __fetch_recent_detections(self) -> set[str]:
+    filter = Detection.filter(timestamp__gte = self._image.timestamp - timedelta(seconds=IGNORE_PERIOD))
+    return set(await filter.values_list('number_plate', flat=True))
+
+
   Latin_letters = 'ABEKMHOPCTYX'
   RU_pattern = rf'[{Latin_letters}]\d{{3}}[{Latin_letters}]{{2}}\d{{2,3}}'
 
@@ -109,6 +115,7 @@ class DetectionTask(Task):
       if re.fullmatch(self.RU_pattern, text): return True
       
     return False
+
 
   def __extract_detections(self, results: dict) -> list[dict] | None:
     if 'images' not in results: 
