@@ -1,7 +1,7 @@
 import io
 from aiohttp import ClientSession, ClientError, ContentTypeError, FormData
 
-from common.data import DetectionDetails
+from common.types import DetectionDetails
 from common.logging import logger
 from . import SCHEDULER_ACCESS_TOKEN, SCHEDULER_URL
 

@@ -1,6 +1,6 @@
 import io
 from aiohttp import FormData
-from common.data import DetectionDetails
+from common.types import DetectionDetails
 from .worker import Worker
 
 

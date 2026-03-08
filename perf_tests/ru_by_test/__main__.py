@@ -1,6 +1,7 @@
 import time
 from test_images import all_test_image_paths
-from image_processing.pipelines import DetectCountry, setup_pipeline, pipeline
+from common.types import DetectCountry
+from image_processing.pipelines import setup_pipeline, pipeline
 from image_processing.jpeg import read_local_images
 
 start_time = time.perf_counter()

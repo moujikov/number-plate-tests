@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
-from common.data import DetectionDetails
+from common.types import DetectionDetails, DetectCountry
 from image_processing.jpeg import read_image
 import image_processing.pipelines as pipelines
 
@@ -18,7 +18,7 @@ from . import DETECT_COUNTRIES, MAX_CONCURRENT_REQUESTS
 
 
 ### Preloading models to avoid first request latency
-detect_countries = [pipelines.DetectCountry(c.strip().upper()) for c in DETECT_COUNTRIES.split(',')]
+detect_countries = [DetectCountry(c.strip().upper()) for c in DETECT_COUNTRIES.split(',')]
 pipelines.setup_pipeline(detect_countries)
 
 

@@ -4,12 +4,9 @@ from threading import Lock
 
 from nomeroff_net import pipeline as __pipeline
 
+from common.types import DetectCountry
 from common.logging import logger
 
-
-class DetectCountry(str, Enum):
-  ALL = "ALL"
-  RU = "RU"; BY = "BY"; AM = "AM"; GE = "GE"; KZ = "KZ"; KG = "KG"; UA = "UA"; EU = "EU"
 
 
 ALL_COUNTRIES = [DetectCountry.RU, DetectCountry.BY, DetectCountry.AM, DetectCountry.GE, 

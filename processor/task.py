@@ -7,7 +7,7 @@ import aiofiles
 import aioshutil
 from aiofiles import os as aio_os
 
-from common.data import DetectCountry
+from common.types import DetectCountry
 from common.logging import logger
 from database.models import Detection
 
@@ -136,7 +136,7 @@ class DetectionTask(Task):
   async def __move_to_processed(self) -> str:
     await aio_os.makedirs(os.path.join(IMAGES_DIR, self._processed_file_dir), exist_ok=True)
     await aioshutil.move(self._image.path, os.path.join(IMAGES_DIR, self._processed_file_name))
-    logger.info(f'Processed {self._image.full_name}, saved to {self._processed_file_name}')
+    logger.info(f'Saved {self._image.full_name} to {self._processed_file_name}')
 
 
   async def __move_to_failed(self):

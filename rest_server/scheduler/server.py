@@ -9,7 +9,7 @@ from asgi_correlation_id import CorrelationIdMiddleware
 
 from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
-from common.data import DetectionDetails
+from common.types import DetectionDetails
 from .task import ImageDetectionWorkerTask
 from .pool import RoundRobinWorkersPool, WorkersPoolConfigurator
 

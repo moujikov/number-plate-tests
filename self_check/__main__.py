@@ -1,5 +1,6 @@
 import time
-from image_processing.pipelines import DetectCountry, pipeline, setup_pipeline
+from common.types import DetectCountry
+from image_processing.pipelines import pipeline, setup_pipeline
 from image_processing.jpeg import read_local_images
 
 failed = False
