@@ -39,4 +39,4 @@ else:
 
 SCHEDULER_ACCESS_TOKEN = os.getenv('SCHEDULER_ACCESS_TOKEN') 
 if SCHEDULER_ACCESS_TOKEN:
-  logger.info('Using scheduler access token from environment variable.')
+  logger.info('Using scheduler access token from environment variable')

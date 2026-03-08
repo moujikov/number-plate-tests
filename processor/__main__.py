@@ -1,7 +1,5 @@
 import asyncio
 
-from tortoise import Tortoise
-
 from common.logging import logger
 from database import init_database, release_database
 from . import CHECK_PERIOD
