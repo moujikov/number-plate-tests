@@ -18,7 +18,6 @@ async def init_database():
     db_url=DATABASE_URL,
     modules={'models': ['database.models']}
   )
-  await Tortoise.generate_schemas(safe=True)
 
 async def release_database():
   await Tortoise.close_connections()
