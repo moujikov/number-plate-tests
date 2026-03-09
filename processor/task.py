@@ -107,12 +107,12 @@ class DetectionTask(Task):
     return set(await filter.values_list('number_plate', flat=True))
 
 
-  Latin_letters = 'ABEKMHOPCTYX'
-  RU_pattern = rf'[{Latin_letters}]\d{{3}}[{Latin_letters}]{{2}}\d{{2,3}}'
+  __RU_LETTERS = 'ABEKMHOPCTYX'
+  __RU_PATTERN = re.compile(rf'[{__RU_LETTERS}]\d{{3}}[{__RU_LETTERS}]{{2}}\d{{2,3}}')
 
   def __check_valid(self, region: str, text: str) -> bool:
     if region == DetectCountry.RU.value:
-      if re.fullmatch(self.RU_pattern, text): return True
+      if re.fullmatch(self.__RU_PATTERN, text): return True
       
     return False
 
