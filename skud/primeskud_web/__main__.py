@@ -1,33 +1,32 @@
 import asyncio
 
-from durations import Duration
-
 from common.logging import logger
 from database import init_database, release_database
+from skud.backend import Users
 from . import CHECK_PERIOD
 from .session import PrimeSkudWebSession
 from .loader import PrimeSkudWebLoader
 
 
-async def main_loop(duration: Duration, periodic_function):
-  await init_database()
-  while True:
-    # Repeat after the interval or when done, whatever comes LAST
-    await asyncio.gather(
-      asyncio.sleep(duration.to_seconds()),
-      periodic_function())
 
-async def cleanup():
-  await session.close()
-  await release_database()
+async def main():
+  try:
+    await init_database()
 
+    session = PrimeSkudWebSession()
+    users = Users()
+    processor = PrimeSkudWebLoader(session, users)
 
-session = PrimeSkudWebSession()
-processor = PrimeSkudWebLoader(session)
+    while True:   # Repeat after the interval or when done, whatever comes LAST
+      await asyncio.gather(
+        asyncio.sleep(CHECK_PERIOD.to_seconds()),
+        processor.update_users())
+  finally:
+    if session: await session.close()
+    await release_database()
+
 
 try:
-  asyncio.run(main_loop(CHECK_PERIOD, processor.load_new_data))
+  asyncio.run(main())
 except KeyboardInterrupt:
   pass # Allows graceful exit
-finally:
-  asyncio.run(cleanup())

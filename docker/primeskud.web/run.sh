@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-CHECK_PERIOD=1m
+CHECK_PERIOD=1h
 PRIME_SKUD_URL=https://prime-skud.ru
 
 
@@ -11,7 +11,7 @@ usage() {
 Usage: ./docker/primeskud.web/run.sh [--scheduler-port <port>] [--scheduler-token <token>] ...
 
 Options:
-  --check-period, -cp     New data request frequency (e.g. 5m, 1h, default: 1m).
+  --check-period, -cp     New data request frequency (e.g. 5m, 1h, default: 1h).
   --web-login, -wl        Login for Prime Skud web interface.
   --web-password, -wp     Password for Prime Skud web interface.
   --help, -h              Show this help
@@ -73,6 +73,7 @@ docker run --rm -t --name number-plates-primeskud.web \
   ${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
   --volume ./common:/app/common \
   --volume ./database:/app/database \
+  --volume ./skud/backend:/app/skud/backend \
   --volume ./skud/primeskud_web:/app/skud/primeskud_web \
   --mount type=bind,src=".secrets/primeskud_web_password.txt",dst=/run/secrets/web_password,readonly \
   --add-host host.docker.internal:host-gateway \

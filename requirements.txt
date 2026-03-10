@@ -5,8 +5,11 @@ asgi-correlation-id
 asyncio
 durations
 fastapi
+openpyxl
+pandas
 python-multipart
 tortoise-orm[asyncpg]
+xlrd
 uvicorn
 
 PyTurboJPEG  @ git+https://github.com/lilohuang/PyTurboJPEG.git

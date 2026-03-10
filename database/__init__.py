@@ -2,6 +2,7 @@ import os
 
 from tortoise import Tortoise
 
+from common import TZ
 from common.logging import logger
 
 
@@ -16,6 +17,7 @@ else:
 async def init_database():
   await Tortoise.init(
     db_url=DATABASE_URL,
+    timezone=TZ,
     modules={'models': ['database.models']}
   )
 

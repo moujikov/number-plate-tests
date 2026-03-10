@@ -12,7 +12,7 @@ RUN <<EOF
 
     pip install --upgrade pip
     pip install \
-        aiofiles aiohttp aioshutil asyncio durations tortoise-orm[asyncpg]
+        aiofiles aiohttp aioshutil asyncio durations pandas tortoise-orm[asyncpg] xlrd
 EOF
 
 
@@ -20,6 +20,7 @@ WORKDIR /app
 
 COPY common common
 COPY database database
+COPY skud/backend skud/backend
 COPY skud/primeskud_web skud/primeskud_web
 
 ENTRYPOINT ["python", "-m", "skud.primeskud_web"]
