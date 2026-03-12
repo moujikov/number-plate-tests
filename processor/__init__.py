@@ -12,6 +12,7 @@ logger.info(f'Processing at most {PROCESS_AT_ONCE} images at once')
 IGNORE_PERIOD = int(os.getenv('IGNORE_PERIOD', 60))
 logger.info(f'Ignoring detections seen within the last {IGNORE_PERIOD} seconds')
 
+
 CAMERAS_DIR = os.getenv('CAMERAS_DIR')
 if CAMERAS_DIR:
   logger.info(f'Watching for new images in {CAMERAS_DIR}')
@@ -31,12 +32,20 @@ if IMAGES_DIR:
 else:
   raise ValueError("IMAGES_DIR environment variable is not set")
 
+
 SCHEDULER_URL = os.getenv('SCHEDULER_URL') 
-if SCHEDULER_URL:
-  logger.info(f'Using scheduler at {SCHEDULER_URL}')
-else:
+if not SCHEDULER_URL:
   raise ValueError("SCHEDULER_URL environment variable is not set")
 
 SCHEDULER_ACCESS_TOKEN = os.getenv('SCHEDULER_ACCESS_TOKEN') 
 if SCHEDULER_ACCESS_TOKEN:
-  logger.info('Using scheduler access token from environment variable')
+  logger.info(f"Using scheduler at '{SCHEDULER_URL}' with access token from environment variable")
+else:
+  try:
+    with open('/run/secrets/scheduler_access_token') as f:
+      SCHEDULER_ACCESS_TOKEN = f.read().strip()
+      logger.info(f"Using scheduler at '{SCHEDULER_URL}' with access token from secret")
+  except FileNotFoundError:
+    raise ValueError(
+      "No scheduler access token secret found"
+      " and SCHEDULER_ACCESS_TOKEN environment variable is not set")

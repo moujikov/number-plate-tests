@@ -11,8 +11,15 @@ while IFS='=' read -r -d '' user_var login; do
     password="${!password_var:-}"
 
     if [[ -z "$password" ]]; then
-      echo "Error: No password found for user '$login' (expected in variable '$password_var')" >&2
-      exit 1
+      secret_file="/run/secrets/ftp_${login}_password"
+      if [[ -f "$secret_file" ]]; then
+        password="$(< "$secret_file")"
+      fi
+      if [[ -z "$password" ]]; then
+        echo "Error: No password found for user '$login'" >&2
+        echo "Neither in secret '$secret_file' nor in environment variable '$password_var'" >&2
+        exit 1
+      fi
     fi
 
     if id "$login" >/dev/null 2>&1; then

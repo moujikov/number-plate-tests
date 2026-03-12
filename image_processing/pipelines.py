@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Callable, Sequence
 from threading import Lock
 
@@ -45,7 +44,9 @@ def setup_pipeline(countries: Sequence[DetectCountry] | DetectCountry):
     configured_countries = ALL_COUNTRIES
 
   logger.info(
-    f'Preloading models for {', '.join([c.value for c in configured_countries])} number plate types...')
+              f'Preloading recognition models for number plate types:'
+              f' {", ".join([c.value for c in configured_countries])}'
+             )
   __cached_pipeline = LockablePipeline(__create_pipeline(configured_countries))
   __cached_pipeline([]) # Preload models to avoid first request latency
 

@@ -2,21 +2,22 @@
 
 set -euo pipefail
 
-DEFAULT_HOST="http://127.0.0.1"
+DEFAULT_HOST="http://localhost"
 DEFAULT_PORT="8000"
 
 usage() {
-	cat <<EOF
+  cat <<EOF
 Usage: ./test-rest.sh [--base-url <url>] [--file <path> ...] [--token <token>]
 
 Options:
-  --port, -p    	Server port (default: ${DEFAULT_PORT})
-  --url, -u     	Server URL (default: ${DEFAULT_HOST}:${DEFAULT_PORT}, overrides --port)
-  --file, -f    	Directory or single image file to upload (repeatable).
-                	If ommitted a full set of local test images will be used.
-  --token, -t   	Access token for authentication.
-  --details, -d   Result details level (default: none (number plate only); options: full, region).
-  --help, -h    	Show this help
+  --port, -p      Server port (default: ${DEFAULT_PORT})
+  --url, -u       Server URL (default: ${DEFAULT_HOST}:${DEFAULT_PORT}, overrides --port)
+  --file, -f      Directory or single image file to upload (repeatable)
+                  If ommitted a full set of local test images will be used
+  --token, -t     Access token for authentication
+                  Also accepts file path to read token from
+  --details, -d   Result details level (default: none (number plate only); options: full, region)
+  --help, -h      Show this help
 
 Examples:
   ./test-rest.sh
@@ -33,76 +34,79 @@ DETAILS=""
 FILES=()
 
 while [[ $# -gt 0 ]]; do
-	case "$1" in
-		--url|-u)
-			BASE_URL="${2:-}"
-			shift 2
-			;;
-		--url=*)
-			BASE_URL="${1#*=}"
-			shift
-			;;
-		--port|-p)
-			if [[ -z "$BASE_URL" ]]; then
-				BASE_URL="${DEFAULT_HOST}:${2:-}"
-			fi
-			shift 2
-			;;
-		--port=*)
-			if [[ -z "$BASE_URL" ]]; then
-				BASE_URL="${DEFAULT_HOST}:${1#*=}"
-			fi
-			shift
-			;;
-		--file|-f)
-			FILES+=("${2:-}")
-			shift 2
-			;;
-		--file=*)
-			FILES+=("${1#*=}")
-			shift
-			;;
-		--token|-t)
-			TOKEN="${2:-}"
-			shift 2
-			;;
-		--token=*)
-			TOKEN="${1#*=}"
-			shift
-			;;
-		--details|-d)
-			DETAILS="${2:-}"
-			shift 2
-			;;
-		--details=*)
-			DETAILS="${1#*=}"
-			shift
-			;;
-		--help|-h)
-			usage
-			exit 0
-			;;
-		*)
-			echo "Unknown argument: $1" >&2
-			usage
-			exit 1
+  case "$1" in
+    --url|-u)
+      BASE_URL="${2:-}"
+      shift 2
+      ;;
+    --url=*)
+      BASE_URL="${1#*=}"
       shift
-			;;
-	esac
+      ;;
+    --port|-p)
+      if [[ -z "$BASE_URL" ]]; then
+        BASE_URL="${DEFAULT_HOST}:${2:-}"
+      fi
+      shift 2
+      ;;
+    --port=*)
+      if [[ -z "$BASE_URL" ]]; then
+        BASE_URL="${DEFAULT_HOST}:${1#*=}"
+      fi
+      shift
+      ;;
+    --file|-f)
+      FILES+=("${2:-}")
+      shift 2
+      ;;
+    --file=*)
+      FILES+=("${1#*=}")
+      shift
+      ;;
+    --token|-t)
+      TOKEN="${2:-}"
+      shift 2
+      ;;
+    --token=*)
+      TOKEN="${1#*=}"
+      shift
+      ;;
+    --details|-d)
+      DETAILS="${2:-}"
+      shift 2
+      ;;
+    --details=*)
+      DETAILS="${1#*=}"
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage
+      exit 1
+      shift
+      ;;
+  esac
 done
 
 if [[ -z "$BASE_URL" ]]; then
-	BASE_URL="${DEFAULT_HOST}:${DEFAULT_PORT}"
+  BASE_URL="${DEFAULT_HOST}:${DEFAULT_PORT}"
 fi
 
 CURL_ARGS=()
 
 if [[ -n "$TOKEN" ]]; then
+  if [[ -f "$TOKEN" ]]; then
+    TOKEN="$(< "$TOKEN")"
+  fi
   CURL_ARGS+=( -H "Authorization: Bearer ${TOKEN}" )
 fi
 
 if [[ -n "$DETAILS" ]]; then
-	CURL_ARGS+=( -F "details=${DETAILS}" )
+  CURL_ARGS+=( -F "details=${DETAILS}" )
 fi
 
 
@@ -121,7 +125,7 @@ for d in "${FILES[@]}"; do
 done
 
 if [[ ${#FILES[@]} -eq 0 ]]; then
-  echo "No files provided. Use --file/-f and/or --dir for $ENDPOINT." >&2
+  echo "No files provided. Use --file/-f parameter." >&2
   usage >&2
   exit 2
 fi

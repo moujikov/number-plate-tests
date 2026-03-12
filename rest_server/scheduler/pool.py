@@ -1,8 +1,8 @@
-import os
 import time
+
 from asyncio import Event, Queue
 
-from common.logging import logger as general_logger
+from common.logging import logger as logger
 from rest_server.common.logging import logger as server_logger
 from .task import WorkerTask
 from .worker import Worker
@@ -17,11 +17,11 @@ class WorkersPool:
     self._workers.append(worker)
 
   async def close(self):
-    general_logger.info(f"Closing all workers in the pool")
+    logger.info(f"Closing all workers in the pool")
     for worker in self._workers:
       await worker.close()
 
-  async def schedule_task(self, task: WorkerTask) -> any:
+  async def schedule_task(self, task: WorkerTask) -> dict:
     worker = None
     try:
       worker = await self._take_worker(task)
@@ -85,6 +85,9 @@ class WorkerPromise:
     server_logger.debug(f"Waiting for worker for {self.task}...")
     await self.__event.wait()
 
+    if not self.__worker:
+      raise Exception("WorkerPromise fulfilled without worker")
+
     waited = time.perf_counter() - started
     server_logger.debug(
       f"After {waited:.2f}s got worker {self.__worker.full_str} for {self.task}")
@@ -94,28 +97,3 @@ class WorkerPromise:
   def fulfill(self, worker: Worker):
     self.__worker = worker
     self.__event.set()
-
-
-class WorkersPoolConfigurator:
-  WORKER_URL_PREFIX = "WORKER_URL_"
-  WORKER_ACCESS_TOKEN_PREFIX = "WORKER_ACCESS_TOKEN_"
-
-  def __init__(self, pool: WorkersPool):
-    self.pool = pool
-
-  def read_settings_from_environment(self):
-    for id in sorted([key.removeprefix(self.WORKER_URL_PREFIX) 
-               for key in os.environ.keys() 
-               if key.startswith(self.WORKER_URL_PREFIX)]):
-      url = os.getenv(f"{self.WORKER_URL_PREFIX}{id}", "").strip()
-      token = os.getenv(f"{self.WORKER_ACCESS_TOKEN_PREFIX}{id}", "").strip()
-      if url: 
-        self._add_worker(id, url, token)
-
-  def _add_worker(self, id: int, url: str, token: str):
-    worker = Worker(id, url, token if token else None)
-    general_logger.info(
-                        f"Adding worker {worker.full_str}"
-                        f"{' with access token' if token else ''} to the pool"
-                        )
-    self.pool.add_worker(worker)

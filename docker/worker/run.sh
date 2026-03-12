@@ -2,19 +2,22 @@
 
 set -eu -o pipefail
 
-PORT=8000
-COUNTRIES="RU"
+DEFAULT_PORT=8000
 REQUESTS=1
+COUNTRIES="RU"
 
 usage() {
   cat <<EOF
-Usage: ./docker/worker/run.sh [--port <port>] [--token <token>] [--requests <requests>] [--countries <countries>]
+Usage: ./docker/worker/run.sh [--port <port>] [--token <token>] [--requests <requests>] [--countries <countries>] [--number <number>]
 
 Options:
-  --port, -p        Port to run the server on (default: ${PORT}).
-  --token, -t       Access token for authentication.
-  --requests, -r    Maximum number of concurrent requests (default: ${REQUESTS}).
-  --countries, -c   Supported countries (default: ${COUNTRIES}; options: ALL | RU,BY,AM...).
+  --port, -p        Port to run the server on (default: ${DEFAULT_PORT})
+  --token, -t       Access token for authentication (looked up in secrets if omitted)
+  --number, -n      Worker number.
+                    If no explicit port, sets port to ${DEFAULT_PORT} + <n>
+                    If no explicit access token, sets token to secret number <n>
+  --requests, -r    Maximum number of concurrent requests (default: ${REQUESTS})
+  --countries, -c   Supported countries (default: ${COUNTRIES}; options: ALL | RU,BY,AM...)
   --help, -h        Show this help
 
 Examples:
@@ -24,7 +27,7 @@ Examples:
 EOF
 }
 
-DOCKER_ENV_PARAMS=( -e "PYTHONDEVMODE=1" )
+DOCKER_ENV_PARAMS=( -e "PYTHONDEVMODE=1" -e "LOG_LEVEL=DEBUG" )
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,11 +40,19 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --token|-t)
-      DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${2:-}" )
+      ACCESS_TOKEN="${2:-}"
       shift 2
       ;;
     --token=*)
-      DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${1#*=}" )
+      ACCESS_TOKEN="${1#*=}"
+      shift
+      ;;
+    --number|-n)
+      WORKER_NUMBER="${2:-}"
+      shift 2
+      ;;
+    --number=*)
+      WORKER_NUMBER="${1#*=}"
       shift
       ;;
     --requests|-r)
@@ -73,12 +84,32 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ -z "${PORT:-}" ]]; then
+  if [[ -n "${WORKER_NUMBER:-}" ]]; then
+    PORT=$(( DEFAULT_PORT + WORKER_NUMBER ))
+  else
+    PORT=$DEFAULT_PORT
+  fi
+fi
+
 DOCKER_ENV_PARAMS+=( 
   -e "PORT=${PORT}" \
   -e "DETECT_COUNTRIES=${COUNTRIES}" \
   -e "MAX_CONCURRENT_REQUESTS=${REQUESTS}" )
 
-docker run --rm -t --name number-plates-worker \
+if [[ -z "${ACCESS_TOKEN:-}" ]]; then
+  INDEX=${WORKER_NUMBER:-1}
+  secret_file="docker/.secrets/worker-${INDEX}_access_token"
+  if [[ -f "$secret_file" ]]; then
+    ACCESS_TOKEN="$(< "$secret_file")"
+  fi
+fi
+
+if [[ -n "${ACCESS_TOKEN:-}" ]]; then
+  DOCKER_ENV_PARAMS+=( -e "ACCESS_TOKEN=${ACCESS_TOKEN}" )
+fi
+
+docker run --rm -t --name number-plates-worker${WORKER_NUMBER:+-${WORKER_NUMBER}} \
   --env-file ./docker/worker/.env \
   ${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
   --volume .:/app \

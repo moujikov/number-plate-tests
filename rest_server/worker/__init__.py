@@ -9,7 +9,7 @@ logger.info(f'Listening on {HOST}:{PORT}')
 
 MAX_CONCURRENT_REQUESTS = int(os.getenv('MAX_CONCURRENT_REQUESTS', 0))
 if MAX_CONCURRENT_REQUESTS > 0:
-  logger.info(f'Setting max concurrent requests to {MAX_CONCURRENT_REQUESTS}.')
+  logger.info(f'Setting max concurrent requests to {MAX_CONCURRENT_REQUESTS}')
 
 
 DETECT_COUNTRIES = os.getenv('DETECT_COUNTRIES', 'RU')

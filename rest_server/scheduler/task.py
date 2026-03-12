@@ -1,11 +1,13 @@
+from abc import ABC, abstractmethod
 import io
 from aiohttp import FormData
 from common.types import DetectionDetails
 from .worker import Worker
 
 
-class WorkerTask:
-  async def execute_on(self, worker: Worker) -> any:
+class WorkerTask(ABC):
+  @abstractmethod
+  async def execute_on(self, worker: Worker) -> dict:
     pass
 
 
@@ -24,7 +26,7 @@ class ImageDetectionWorkerTask(WorkerTask):
                                filename = filename, 
                                content_type = content_type)
 
-  async def execute_on(self, worker: Worker) -> any:
+  async def execute_on(self, worker: Worker) -> dict:
     return await worker.request("POST", self._path, self._form_data)
   
   def __str__(self):

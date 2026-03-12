@@ -17,9 +17,10 @@ services:
     environment:
       - PASSIVE_PORTS=30001-30005
       - FTP_USER_1=camera-1
-      - FTP_PASSWORD_1=pass1
       - FTP_USER_2=camera-2
-      - FTP_PASSWORD_2=pass2
+    secrets:
+      - ftp_camera-1_password
+      - ftp_camera-2_password
 
   processor:
     container_name: processor
@@ -37,6 +38,9 @@ services:
       # SYSTEM_LOG_LEVEL: DEBUG
       PROCESS_AT_ONCE: 3
       IGNORE_PERIOD: 10
+    secrets:
+      - db_password_processor
+      - scheduler_access_token
     depends_on:
       database:
         condition: service_healthy
@@ -47,10 +51,15 @@ services:
     container_name: database
     image: postgres:18-alpine
     restart: unless-stopped
-    env_file: database/.env
     volumes:
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/init:/docker-entrypoint-initdb.d
       - database:/var/lib/postgresql
+    env_file: database/.env
+    secrets:
+      - db_password_postgres
+      - db_password_processor
+      - db_password_skud
+      - db_password_frontend
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
       interval: 10s
@@ -78,6 +87,10 @@ services:
       # SYSTEM_LOG_LEVEL: DEBUG
       WORKER_URL_1: http://worker-1:8000
       WORKER_URL_2: http://worker-2:8000
+    secrets:
+      - scheduler_access_token
+      - worker-1_access_token
+      - worker-2_access_token
     depends_on:
       worker-1:
         condition: service_healthy
@@ -95,6 +108,9 @@ services:
       PYTHONDEVMODE: 1
       LOG_LEVEL: DEBUG
       # SYSTEM_LOG_LEVEL: DEBUG
+      ACCESS_TOKEN_PATH: /run/secrets/worker-1_access_token
+    secrets:
+      - worker-1_access_token
 
   worker-2:
     container_name: worker-2
@@ -107,9 +123,34 @@ services:
       PYTHONDEVMODE: 1
       LOG_LEVEL: DEBUG
       # SYSTEM_LOG_LEVEL: DEBUG
+      ACCESS_TOKEN_PATH: /run/secrets/worker-2_access_token
+    secrets:
+      - worker-2_access_token
 
 volumes:
   database:
   cameras:
   images:
   logs_ftp-server:
+
+secrets:
+  primeskud_web_password:
+    file: .secrets/primeskud_web_password
+  db_password_postgres:
+    file: .secrets/db_password_postgres
+  db_password_processor:
+    file: .secrets/db_password_processor
+  db_password_skud:
+    file: .secrets/db_password_skud
+  db_password_frontend:
+    file: .secrets/db_password_frontend
+  ftp_camera-1_password:
+    file: .secrets/ftp_camera-1_password
+  ftp_camera-2_password:
+    file: .secrets/ftp_camera-2_password
+  scheduler_access_token:
+    file: .secrets/scheduler_access_token
+  worker-1_access_token:
+    file: .secrets/worker-1_access_token
+  worker-2_access_token:
+    file: .secrets/worker-2_access_token

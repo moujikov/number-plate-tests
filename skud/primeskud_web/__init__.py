@@ -14,18 +14,16 @@ else:
   raise ValueError("PRIME_SKUD_URL environment variable is not set")
 
 WEB_LOGIN = os.getenv('WEB_LOGIN')
-if WEB_LOGIN:
-  logger.info(f'Logging into web interface as {WEB_LOGIN}')
-else:
+if not WEB_LOGIN:
   raise ValueError("WEB_LOGIN environment variable is not set")
 
 WEB_PASSWORD = os.getenv('WEB_PASSWORD')
-if WEB_PASSWORD is not None:
-  logger.info(f'Using web password from environment variable')
+if WEB_PASSWORD:
+  logger.info(f"Logging into web interface as '{WEB_LOGIN}' with password from environment variable")
 else:
   try:
-    with open('/run/secrets/web_password') as f:
+    with open('/run/secrets/primeskud_web_password') as f:
       WEB_PASSWORD = f.read().strip()
-      logger.info(f'Using web password from secret')
+      logger.info(f"Logging into web interface as '{WEB_LOGIN}' with password from secret")
   except FileNotFoundError:
-    raise ValueError("No web_password secret found and WEB_PASSWORD environment variable is not set")
+    raise ValueError('No web password secret found and WEB_PASSWORD environment variable is not set')

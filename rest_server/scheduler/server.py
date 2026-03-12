@@ -1,31 +1,34 @@
 import asyncio
-import contextlib
-import contextlib
-import urllib
+from contextlib import asynccontextmanager
+from urllib import parse as urlparse
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
 from asgi_correlation_id import CorrelationIdMiddleware
 
+from common.logging import logger as common_logger
+from common.types import DetectionDetails
 from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
-from common.types import DetectionDetails
 from .task import ImageDetectionWorkerTask
-from .pool import RoundRobinWorkersPool, WorkersPoolConfigurator
+from .pool import RoundRobinWorkersPool
+from .pool_config import WorkersPoolConfigurator
 
 ### Resources initialization
 workers = RoundRobinWorkersPool()
 
   
-@contextlib.asynccontextmanager
+@asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    workers_configurator = WorkersPoolConfigurator(workers)
-    workers_configurator.read_settings_from_environment()
+  # Startup
+  workers_configurator = WorkersPoolConfigurator(workers)
+  workers_configurator.read_settings_from_environment()
 
-    yield
-    # Shutdown    
-    await workers.close()
+  common_logger.info('Server ready')
+  yield
+  
+  # Shutdown    
+  await workers.close()
 
 
 ### FastAPI app
@@ -62,7 +65,7 @@ async def detect(
 ### Helper functions
 
 async def forward_request(path: str, upload_files: list[UploadFile], details: DetectionDetails):
-  filenames = [urllib.parse.unquote(f.filename) for f in upload_files]
+  filenames = [urlparse.unquote(f.filename) if f.filename else '(unknown)' for f in upload_files]
   logger.info(f'Processing files: {", ".join(filenames)}')
 
   try:
@@ -70,8 +73,10 @@ async def forward_request(path: str, upload_files: list[UploadFile], details: De
       tasks = []
       for file in upload_files:
         t = ImageDetectionWorkerTask(path, details)
-        name = urllib.parse.unquote(file.filename)
-        t.add_image(name, file.content_type, await file.read())
+        name = urlparse.unquote(file.filename) if file.filename else '(unknown)'
+        content_type = file.content_type if file.content_type else 'image/jpeg'
+        contents = await file.read()
+        t.add_image(name, content_type, contents)
         tasks.append(tg.create_task(workers.schedule_task(t), name = name))
 
     results = []

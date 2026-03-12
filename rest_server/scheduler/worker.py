@@ -40,7 +40,7 @@ class Worker:
       self.__client_session = None
 
 
-  async def request(self, method: str, path: str, data: FormData = None) -> any:
+  async def request(self, method: str, path: str, data: FormData | None = None) -> dict:
     if self._state != WorkerState.BUSY:
       raise Exception(f"Can't use worker {self.full_str} when it is {self._state.value}")
     
@@ -49,13 +49,13 @@ class Worker:
         return await response.json()
       else:
         try:
-          data = await response.json()
+          unexpected_result = await response.json()
         except ContentTypeError:
-          data = await response.text()
+          unexpected_result = await response.text()
 
         return {
           "status": response.status,
-          "data": data
+          "data": unexpected_result
         }
 
 

@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from collections.abc import Awaitable
 from typing import Collection
 import urllib
@@ -7,23 +8,32 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
 
+from common.logging import logger as common_logger
+from common.types import DetectionDetails, DetectCountry
 from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
-from common.types import DetectionDetails, DetectCountry
 from image_processing.jpeg import read_image
 import image_processing.pipelines as pipelines
 
 from . import DETECT_COUNTRIES, MAX_CONCURRENT_REQUESTS
 
 
+### Resources initialization
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+  # Startup
+  detect_countries = [DetectCountry(c.strip().upper()) for c in DETECT_COUNTRIES.split(',')]
+  # Preloading models to avoid first request latency
+  await asyncio.to_thread(pipelines.setup_pipeline, detect_countries)
 
-### Preloading models to avoid first request latency
-detect_countries = [DetectCountry(c.strip().upper()) for c in DETECT_COUNTRIES.split(',')]
-pipelines.setup_pipeline(detect_countries)
+  common_logger.info('Server ready')
+  yield
+  
+  # Shutdown
 
 
 ### FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 auth = OAuth2PasswordBearer(tokenUrl="access_token", auto_error=False)
 concurrent_requests = 0
 
@@ -62,6 +72,7 @@ async def with_concurrency_check(awaitable: Awaitable, /, *args, **kwargs):
   
   try:
     if concurrent_requests > MAX_CONCURRENT_REQUESTS > 0:
+      logger.warning(f'Too many concurrent requests (limit: {MAX_CONCURRENT_REQUESTS})')
       raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS)
       
     return await awaitable(*args, **kwargs)
