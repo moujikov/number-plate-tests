@@ -1,16 +1,16 @@
 import os
-
+from durations import Duration
 from common.logging import logger
 
 
-CHECK_PERIOD = int(os.getenv('CHECK_PERIOD', 100))
-logger.info(f'Checking for new images every {CHECK_PERIOD}ms')
+CHECK_PERIOD = Duration(os.getenv('CHECK_PERIOD', '100ms'))
+logger.info(f'Checking for new images every {CHECK_PERIOD.representation}')
 
 PROCESS_AT_ONCE = int(os.getenv('PROCESS_AT_ONCE', 20))
 logger.info(f'Processing at most {PROCESS_AT_ONCE} images at once')
 
-IGNORE_PERIOD = int(os.getenv('IGNORE_PERIOD', 60))
-logger.info(f'Ignoring detections seen within the last {IGNORE_PERIOD} seconds')
+IGNORE_PERIOD = Duration(os.getenv('IGNORE_PERIOD', '60s'))
+logger.info(f'Ignoring detections seen within the last {IGNORE_PERIOD.representation}')
 
 
 CAMERAS_DIR = os.getenv('CAMERAS_DIR', '')

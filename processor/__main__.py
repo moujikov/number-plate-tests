@@ -16,7 +16,7 @@ async def main():
     await init_database()
     while True:   # Repeat after the interval or when done, whatever comes LAST
       await asyncio.gather(
-        asyncio.sleep(CHECK_PERIOD / 1000),
+        asyncio.sleep(CHECK_PERIOD.to_seconds()),
         processor.process_new_images())
   finally:
     await session.close()

@@ -1,5 +1,4 @@
 import os
-
 from durations import Duration
 from common.logging import logger
 

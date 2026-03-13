@@ -103,8 +103,10 @@ class DetectionTask(Task):
 
 
   async def __fetch_recent_detections(self) -> set[str]:
-    filter = Detection.filter(timestamp__gte = self._image.timestamp - timedelta(seconds=IGNORE_PERIOD))
-    return set([number_plate[0] for number_plate in await filter.values_list('number_plate')])
+    filter = Detection.filter(
+      timestamp__gte = self._image.timestamp - timedelta(seconds=IGNORE_PERIOD.to_seconds()))
+    fetched_number_plates = await filter.values_list('number_plate')
+    return set([number_plate[0] for number_plate in fetched_number_plates])
 
 
   __RU_LETTERS = 'ABEKMHOPCTYX'
