@@ -6,7 +6,7 @@ SCHEDULER_PORT=8000
 PROCESS_AT_ONCE=3
 
 usage() {
-	cat <<EOF
+  cat <<EOF
 Usage: ./docker/processor/run.sh [--scheduler-port <port>] [--scheduler-token <token>] ...
 
 Options:
@@ -24,42 +24,42 @@ EOF
 DOCKER_ENV_PARAMS=( -e "PYTHONDEVMODE=1" -e "LOG_LEVEL=DEBUG" )
 
 while [[ $# -gt 0 ]]; do
-	case "$1" in
-		--scheduler-port|-sp)
-			SCHEDULER_PORT=${2:-}
-			shift 2
-			;;
-		--scheduler-port=*)
-			SCHEDULER_PORT=${1#*=}
-			shift
-			;;
-		--scheduler-token|-st)
-			SCHEDULER_ACCESS_TOKEN=${2:-}
-			shift 2
-			;;
-		--scheduler-token=*)
-			SCHEDULER_ACCESS_TOKEN=${1#*=}
-			shift
-			;;
-    --process-at-once|-pa)
-			PROCESS_AT_ONCE=${2:-}
-			shift 2
-			;;
-		--process-at-once=*)
-			PROCESS_AT_ONCE=${1#*=}
-			shift
-			;;
-		--help|-h)
-			usage
-			exit 0
-			;;
-		*)
-			echo "Unknown argument: $1" >&2
-			usage
-			exit 1
+  case "$1" in
+    --scheduler-port|-sp)
+      SCHEDULER_PORT=${2:-}
+      shift 2
+      ;;
+    --scheduler-port=*)
+      SCHEDULER_PORT=${1#*=}
       shift
-			;;
-	esac
+      ;;
+    --scheduler-token|-st)
+      SCHEDULER_ACCESS_TOKEN=${2:-}
+      shift 2
+      ;;
+    --scheduler-token=*)
+      SCHEDULER_ACCESS_TOKEN=${1#*=}
+      shift
+      ;;
+    --process-at-once|-pa)
+      PROCESS_AT_ONCE=${2:-}
+      shift 2
+      ;;
+    --process-at-once=*)
+      PROCESS_AT_ONCE=${1#*=}
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage
+      exit 1
+      shift
+      ;;
+  esac
 done
 
 CAMERAS_DIR=/var/local/cameras
@@ -85,11 +85,12 @@ DOCKER_ENV_PARAMS+=( -e "DATABASE_TYPE=postgres" -e "DATABASE_HOST=host.docker.i
 
 
 docker run --rm -t --name number-plates-processor \
-	--env-file ./docker/processor/.env \
-	${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-	--volume .:/app \
-	--volume number-plates_cameras:${CAMERAS_DIR} \
-	--volume number-plates_images:${IMAGES_DIR} \
-	--add-host host.docker.internal:host-gateway \
-	moujikov/number-plates-processor
-	
+  --env-file ./docker/processor/.env \
+  ${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
+  --volume ./common:/app/common \
+  --volume ./database:/app/database \
+  --volume ./processor:/app/processor \
+  --volume number-plates_cameras:${CAMERAS_DIR} \
+  --volume number-plates_images:${IMAGES_DIR} \
+  --add-host host.docker.internal:host-gateway \
+  moujikov/number-plates-processor

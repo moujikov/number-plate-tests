@@ -90,7 +90,9 @@ done
 docker run --rm -t --name number-plates-scheduler \
   --env-file ./docker/scheduler/.env \
   ${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-  --volume .:/app \
+  --volume ./common:/app/common \
+  --volume ./rest_server/common:/app/rest_server/common \
+  --volume ./rest_server/scheduler:/app/rest_server/scheduler \
   --publish ${PORT}:${PORT} \
   --add-host host.docker.internal:host-gateway \
   moujikov/number-plates-scheduler

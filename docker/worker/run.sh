@@ -112,6 +112,9 @@ fi
 docker run --rm -t --name number-plates-worker${WORKER_NUMBER:+-${WORKER_NUMBER}} \
   --env-file ./docker/worker/.env \
   ${DOCKER_ENV_PARAMS[@]+"${DOCKER_ENV_PARAMS[@]}"} \
-  --volume .:/app \
+  --volume ./common:/app/common \
+  --volume ./image_processing:/app/image_processing \
+  --volume ./rest_server/common:/app/rest_server/common \
+  --volume ./rest_server/worker:/app/rest_server/worker \
   --publish ${PORT}:${PORT} \
   moujikov/number-plates-worker

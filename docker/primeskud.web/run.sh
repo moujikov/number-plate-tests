@@ -3,7 +3,6 @@
 set -eu -o pipefail
 
 CHECK_PERIOD=1h
-PRIME_SKUD_URL=https://prime-skud.ru
 
 
 usage() {
@@ -11,7 +10,7 @@ usage() {
 Usage: ./docker/primeskud.web/run.sh [--check-period <period>] [--web-login <login>] ...
 
 Options:
-  --check-period, -cp     New data request frequency (e.g. 5m, 1h, default: 1h)
+  --check-period, -cp     New data request frequency (e.g. 5m, 1h, default: ${CHECK_PERIOD})
   --web-login, -wl        Login for Prime Skud web interface
   --web-password, -wp     Password for Prime Skud web interface (looked up in secrets if omitted)
   --help, -h              Show this help
@@ -64,7 +63,6 @@ done
 
 
 DOCKER_ENV_PARAMS+=( -e "CHECK_PERIOD=${CHECK_PERIOD}" )
-DOCKER_ENV_PARAMS+=( -e "PRIME_SKUD_URL=${PRIME_SKUD_URL}" )
 
 if [[ -z "${WEB_PASSWORD:-}" ]]; then
   secret_file="docker/.secrets/primeskud_web_password"

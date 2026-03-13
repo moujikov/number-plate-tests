@@ -27,7 +27,9 @@ services:
     image: moujikov/number-plates-processor
     restart: unless-stopped
     volumes:
-      - ..:/app
+      - ../common:/app/common
+      - ../database:/app/database
+      - ../processor:/app/processor
       - cameras:/var/local/cameras
       - images:/var/local/images
     env_file: processor/.env
@@ -37,7 +39,7 @@ services:
       LOG_LEVEL: DEBUG
       # SYSTEM_LOG_LEVEL: DEBUG
       PROCESS_AT_ONCE: 3
-      IGNORE_PERIOD: 10
+      IGNORE_PERIOD: 10s
     secrets:
       - db_password_processor
       - scheduler_access_token
@@ -45,6 +47,28 @@ services:
       database:
         condition: service_healthy
       scheduler:
+        condition: service_healthy
+        
+  primeskud.web:
+    container_name: primeskud.web
+    image: moujikov/number-plates-primeskud.web
+    restart: unless-stopped
+    volumes:
+      - ../common:/app/common
+      - ../database:/app/database
+      - ../skud/backend:/app/skud/backend
+      - ../skud/primeskud_web:/app/skud/primeskud_web
+    env_file: primeskud.web/.env
+    environment:
+      PYTHONDEVMODE: 1
+      PYTHONASYNCIODEBUG: 1
+      LOG_LEVEL: DEBUG
+      # SYSTEM_LOG_LEVEL: DEBUG
+    secrets:
+      - db_password_skud
+      - primeskud_web_password
+    depends_on:
+      database:
         condition: service_healthy
 
   database:
@@ -79,7 +103,9 @@ services:
     ports:
       - 8000:8000/tcp
     volumes:
-      - ..:/app
+      - ../common:/app/common
+      - ../rest_server/common:/app/rest_server/common
+      - ../rest_server/scheduler:/app/rest_server/scheduler
     env_file: scheduler/.env
     environment:
       PYTHONDEVMODE: 1
@@ -102,7 +128,10 @@ services:
     image: moujikov/number-plates-worker
     restart: unless-stopped
     volumes:
-      - ..:/app
+      - ../common:/app/common
+      - ../image_processing:/app/image_processing
+      - ../rest_server/common:/app/rest_server/common
+      - ../rest_server/worker:/app/rest_server/worker
     env_file: worker/.env
     environment:
       PYTHONDEVMODE: 1
@@ -117,7 +146,10 @@ services:
     image: moujikov/number-plates-worker
     restart: unless-stopped
     volumes:
-      - ..:/app
+      - ../common:/app/common
+      - ../image_processing:/app/image_processing
+      - ../rest_server/common:/app/rest_server/common
+      - ../rest_server/worker:/app/rest_server/worker
     env_file: worker/.env
     environment:
       PYTHONDEVMODE: 1

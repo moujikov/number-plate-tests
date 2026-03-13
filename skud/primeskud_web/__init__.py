@@ -4,7 +4,7 @@ from common.logging import logger
 
 
 CHECK_PERIOD = Duration(os.getenv('CHECK_PERIOD', '1h'))
-logger.info(f'Checking for new images every {CHECK_PERIOD.representation}')
+logger.info(f'Updating registered users list every {CHECK_PERIOD.representation}')
 
 PRIME_SKUD_URL = os.getenv('PRIME_SKUD_URL')
 if PRIME_SKUD_URL:

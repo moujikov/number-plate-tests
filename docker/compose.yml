@@ -10,6 +10,10 @@ services:
       - cameras:/home
       - logs_ftp-server:/var/log/proftpd
     env_file: ftp/.env
+    environment:
+      - FTP_USER_1=camera-1
+    secrets:
+      - ftp_camera-1_password
 
   processor:
     container_name: processor
@@ -19,6 +23,23 @@ services:
       - cameras:/var/local/cameras
       - images:/var/local/images
     env_file: processor/.env
+    secrets:
+      - db_password_processor
+      - scheduler_access_token
+    depends_on:
+      database:
+        condition: service_healthy
+      scheduler:
+        condition: service_healthy
+
+  primeskud.web:
+    container_name: primeskud.web
+    image: moujikov/number-plates-primeskud.web
+    restart: unless-stopped
+    env_file: primeskud.web/.env
+    secrets:
+      - db_password_skud
+      - primeskud_web_password
     depends_on:
       database:
         condition: service_healthy
@@ -30,6 +51,11 @@ services:
     env_file: database/.env
     volumes:
       - database:/var/lib/postgresql
+    secrets:
+      - db_password_postgres
+      - db_password_processor
+      - db_password_skud
+      - db_password_frontend
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
       interval: 10s
@@ -56,6 +82,14 @@ services:
       WORKER_URL_4: http://worker-4:8000
       WORKER_URL_5: http://worker-5:8000
       WORKER_URL_6: http://worker-6:8000
+    secrets:
+      - scheduler_access_token
+      - worker-1_access_token
+      - worker-2_access_token
+      - worker-3_access_token
+      - worker-4_access_token
+      - worker-5_access_token
+      - worker-6_access_token
     depends_on:
       worker-1:
         condition: service_healthy
@@ -75,39 +109,91 @@ services:
     image: moujikov/number-plates-worker
     restart: unless-stopped
     env_file: worker/.env
+    environment:
+      ACCESS_TOKEN_PATH: /run/secrets/worker-1_access_token
+    secrets:
+      - worker-1_access_token
 
   worker-2:
     container_name: worker-2
     image: moujikov/number-plates-worker
     restart: unless-stopped
     env_file: worker/.env
+    environment:
+      ACCESS_TOKEN_PATH: /run/secrets/worker-2_access_token
+    secrets:
+      - worker-2_access_token
   
   worker-3:
     container_name: worker-3
     image: moujikov/number-plates-worker
     restart: unless-stopped
     env_file: worker/.env
+    environment:
+      ACCESS_TOKEN_PATH: /run/secrets/worker-3_access_token
+    secrets:
+      - worker-3_access_token
       
   worker-4:
     container_name: worker-4
     image: moujikov/number-plates-worker
     restart: unless-stopped
     env_file: worker/.env
+    environment:
+      ACCESS_TOKEN_PATH: /run/secrets/worker-4_access_token
+    secrets:
+      - worker-4_access_token
     
   worker-5:
     container_name: worker-5
     image: moujikov/number-plates-worker
     restart: unless-stopped
     env_file: worker/.env
+    environment:
+      ACCESS_TOKEN_PATH: /run/secrets/worker-5_access_token
+    secrets:
+      - worker-5_access_token
 
   worker-6:
     container_name: worker-6
     image: moujikov/number-plates-worker
     restart: unless-stopped
     env_file: worker/.env
+    environment:
+      ACCESS_TOKEN_PATH: /run/secrets/worker-6_access_token
+    secrets:
+      - worker-6_access_token
 
 volumes:
   database:
   cameras:
   images:
   logs_ftp-server:
+
+secrets:
+  primeskud_web_password:
+    file: .secrets/primeskud_web_password
+  db_password_postgres:
+    file: .secrets/db_password_postgres
+  db_password_processor:
+    file: .secrets/db_password_processor
+  db_password_skud:
+    file: .secrets/db_password_skud
+  db_password_frontend:
+    file: .secrets/db_password_frontend
+  ftp_camera-1_password:
+    file: .secrets/ftp_camera-1_password
+  scheduler_access_token:
+    file: .secrets/scheduler_access_token
+  worker-1_access_token:
+    file: .secrets/worker-1_access_token
+  worker-2_access_token:
+    file: .secrets/worker-2_access_token
+  worker-3_access_token:
+    file: .secrets/worker-3_access_token
+  worker-4_access_token:
+    file: .secrets/worker-4_access_token
+  worker-5_access_token:
+    file: .secrets/worker-5_access_token
+  worker-6_access_token:
+    file: .secrets/worker-6_access_token
