@@ -9,7 +9,7 @@ from aiofiles import os as aio_os
 
 from common.types import DetectCountry
 from common.logging import logger
-from database.models import Detection
+from database.models import Detection, UserRecord
 
 from . import CAMERAS_DIR, IGNORE_PERIOD, IMAGES_DIR
 from .image import InputImage
@@ -77,7 +77,8 @@ class DetectionTask(Task):
         invalid.append(text)
         continue
 
-      await self.__save_detection(text, region, box)
+      user = await UserRecord.filter(number_plate = text).order_by('-removed', 'id').first()
+      await self.__save_detection(text, region, box, user)
       saved.append(text)
 
     if saved: logger.info(f'Detections saved: {", ".join(saved)} ({self._image.full_name})')
@@ -90,22 +91,25 @@ class DetectionTask(Task):
       await self.__delete()
 
 
-  async def __save_detection(self, number_plate: str, region: str, box: str | None = None):
+  async def __save_detection(
+      self, number_plate: str, region: str, 
+      box: str | None = None, user: UserRecord | None = None):
     detection = Detection(
       timestamp = self._image.timestamp,
       number_plate = number_plate,
       region = region,
       box = box,
       camera = self._image.camera,
-      image = self._processed_file_name
+      image = self._processed_file_name,
+      user = user
       )
     await detection.save()
 
 
   async def __fetch_recent_detections(self) -> set[str]:
-    filter = Detection.filter(
+    query = Detection.filter(
       timestamp__gte = self._image.timestamp - timedelta(seconds=IGNORE_PERIOD.to_seconds()))
-    fetched_number_plates = await filter.values_list('number_plate')
+    fetched_number_plates = await query.values_list('number_plate')
     return set([number_plate[0] for number_plate in fetched_number_plates])
 
 

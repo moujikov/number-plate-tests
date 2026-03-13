@@ -1,6 +1,6 @@
+from typing import Any
 from enum import Enum
 from aiohttp import ClientSession, ContentTypeError, FormData
-from matplotlib.pylab import Any
 
 
 class WorkerState(str, Enum):

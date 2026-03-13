@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
 import io
+from typing import Any
+from abc import ABC, abstractmethod
 from aiohttp import FormData
-from matplotlib.pylab import Any
 from common.types import DetectionDetails
 from .worker import Worker
 
