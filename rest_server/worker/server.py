@@ -1,13 +1,13 @@
 import asyncio
+from typing import Any
 from contextlib import asynccontextmanager
 from collections.abc import Awaitable
-from typing import Callable, Collection
+from typing import Collection
 from urllib import parse as urlparse
 
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
-from matplotlib.pylab import Any
 
 from common.logging import logger as common_logger
 from common.types import DetectionDetails, DetectCountry

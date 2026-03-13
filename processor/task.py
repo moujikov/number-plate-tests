@@ -65,23 +65,30 @@ class DetectionTask(Task):
         logger.warning(f'Image {self._image.full_name} text/region missing in detection: {results}')
         continue
 
-      text = str(detection['text'])
+      number_plate = str(detection['text'])
       region = str(detection['region'])
       box = str(detection['box']) if 'box' in detection else None
 
-      if text in recent:
-        repeated.append(text)
+      if number_plate in recent:
+        repeated.append(number_plate)
         continue
 
-      if not self.__check_valid(region, text):
-        invalid.append(text)
+      if not self.__check_valid(region, number_plate):
+        invalid.append(number_plate)
         continue
 
-      user = await UserRecord.filter(number_plate = text).order_by('-removed', 'id').first()
-      await self.__save_detection(text, region, box, user)
-      saved.append(text)
+      user = await UserRecord.filter(number_plate = number_plate).order_by('-removed', 'id').first()
+      await self.__save_detection(number_plate, region, box, user)
+      saved.append((number_plate, user))
 
-    if saved: logger.info(f'Detections saved: {", ".join(saved)} ({self._image.full_name})')
+    if saved:
+      saved_numbers = ", ".join([f"{number_plate}" for number_plate, _ in saved])
+      saved_summary = ", ".join([f"{number_plate} – {user.name} [#{user.id}]" 
+                                 for number_plate, user in saved if user])
+      logger.debug(f'Detections attributed: {saved_summary}')
+      logger.info(f'Detections saved: {saved_numbers} ({self._image.full_name})')
+
+
     if invalid: logger.info(f'Detections ignored: {", ".join(invalid)} ({self._image.full_name})')
     if repeated: logger.info(f'Detections repeated: {", ".join(repeated)} ({self._image.full_name})')
 
@@ -116,9 +123,9 @@ class DetectionTask(Task):
   __RU_LETTERS = 'ABEKMHOPCTYX'
   __RU_PATTERN = re.compile(rf'[{__RU_LETTERS}]\d{{3}}[{__RU_LETTERS}]{{2}}\d{{2,3}}')
 
-  def __check_valid(self, region: str, text: str) -> bool:
+  def __check_valid(self, region: str, number_plate: str) -> bool:
     if region == DetectCountry.RU.value:
-      if re.fullmatch(self.__RU_PATTERN, text): return True
+      if re.fullmatch(self.__RU_PATTERN, number_plate): return True
       
     return False
 
