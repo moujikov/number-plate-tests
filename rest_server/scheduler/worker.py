@@ -1,5 +1,6 @@
 from enum import Enum
 from aiohttp import ClientSession, ContentTypeError, FormData
+from matplotlib.pylab import Any
 
 
 class WorkerState(str, Enum):
@@ -40,7 +41,7 @@ class Worker:
       self.__client_session = None
 
 
-  async def request(self, method: str, path: str, data: FormData | None = None) -> dict:
+  async def request(self, method: str, path: str, data: FormData | None = None) -> dict[str, Any]:
     if self._state != WorkerState.BUSY:
       raise Exception(f"Can't use worker {self.full_str} when it is {self._state.value}")
     

@@ -13,7 +13,7 @@ IGNORE_PERIOD = int(os.getenv('IGNORE_PERIOD', 60))
 logger.info(f'Ignoring detections seen within the last {IGNORE_PERIOD} seconds')
 
 
-CAMERAS_DIR = os.getenv('CAMERAS_DIR')
+CAMERAS_DIR = os.getenv('CAMERAS_DIR', '')
 if CAMERAS_DIR:
   logger.info(f'Watching for new images in {CAMERAS_DIR}')
   cameras = sorted(os.listdir(CAMERAS_DIR))
@@ -26,18 +26,18 @@ else:
   raise ValueError("CAMERAS_DIR environment variable is not set")
 
 
-IMAGES_DIR = os.getenv('IMAGES_DIR')
+IMAGES_DIR = os.getenv('IMAGES_DIR', '')
 if IMAGES_DIR:
   logger.info(f'Saving processed images to {IMAGES_DIR}')
 else:
   raise ValueError("IMAGES_DIR environment variable is not set")
 
 
-SCHEDULER_URL = os.getenv('SCHEDULER_URL') 
+SCHEDULER_URL = os.getenv('SCHEDULER_URL', '')
 if not SCHEDULER_URL:
   raise ValueError("SCHEDULER_URL environment variable is not set")
 
-SCHEDULER_ACCESS_TOKEN = os.getenv('SCHEDULER_ACCESS_TOKEN') 
+SCHEDULER_ACCESS_TOKEN = os.getenv('SCHEDULER_ACCESS_TOKEN', '') 
 if SCHEDULER_ACCESS_TOKEN:
   logger.info(f"Using scheduler at '{SCHEDULER_URL}' with access token from environment variable")
 else:

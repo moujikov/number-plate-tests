@@ -8,5 +8,6 @@
     "**/.*"
   ],
   "typeCheckingMode": "standard",
-  "reportMissingImports": true
+  "reportMissingImports": true,
+  "reportIncompatibleVariableOverride": "none"
 }

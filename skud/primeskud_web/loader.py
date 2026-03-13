@@ -16,7 +16,11 @@ class PrimeSkudWebLoader:
 
   async def update_users(self):
     logger.info(f'Downloading users list')
-    xls_contents = await self._session.download_users_list()
+    try:
+      xls_contents = await self._session.download_users_list()
+    except Exception as e:
+      logger.error(f'Failed to download users list: {e}')
+      return
 
     data_stream = io.BytesIO(xls_contents)
     users_list = read_excel(data_stream, dtype=str, na_filter=False).to_dict(orient='records')

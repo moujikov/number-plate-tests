@@ -1,4 +1,4 @@
-from typing import Callable, Sequence
+from typing import Callable
 from threading import Lock
 
 from nomeroff_net import pipeline as __pipeline
@@ -12,7 +12,7 @@ ALL_COUNTRIES = [DetectCountry.RU, DetectCountry.BY, DetectCountry.AM, DetectCou
                  DetectCountry.KZ, DetectCountry.KG, DetectCountry.UA, DetectCountry.EU]
 
 
-class LockablePipeline(Callable):
+class LockablePipeline():
   __pipeline: Callable
   __lock: Lock
 
@@ -26,16 +26,16 @@ class LockablePipeline(Callable):
 
 
 __cached_pipeline: LockablePipeline | None = None
-configured_countries: list[DetectCountry] | None = None
+configured_countries: list[DetectCountry] = []
 
 
-def setup_pipeline(countries: Sequence[DetectCountry] | DetectCountry):
+def setup_pipeline(countries: list[DetectCountry] | DetectCountry):
   global __cached_pipeline, configured_countries
 
   if not countries:
     raise ValueError("Countries list cannot be empty")
   
-  if isinstance(countries, Sequence):
+  if isinstance(countries, list):
     configured_countries = countries
   else:
     configured_countries = [countries]
@@ -94,7 +94,7 @@ def __create_pipeline(countries: list[DetectCountry]):
 def __number_plate_classes(countries: list[DetectCountry]):
   return [region for country in countries for region in __country_classes(country)]
 
-def __country_classes(country: DetectCountry):  
+def __country_classes(country: DetectCountry) -> list[str]:  
   if country == DetectCountry.RU:
     return ["ru"]
   elif country == DetectCountry.BY:
@@ -111,8 +111,10 @@ def __country_classes(country: DetectCountry):
     return ["eu_ua_2004", "eu_ua_2015"]
   elif country == DetectCountry.EU:
     return ["eu"]
+  else: 
+    raise ValueError(f"Unsupported country: {country.value}")
 
-def __region_for_country_class(class_name: str):  
+def __region_for_country_class(class_name: str) -> str:  
   if class_name == "ru":
     return DetectCountry.RU.value
   elif class_name == "by":
@@ -132,7 +134,7 @@ def __region_for_country_class(class_name: str):
   else:
     return class_name
 
-def __ocr_model(country: DetectCountry):  
+def __ocr_model(country: DetectCountry) -> str:  
   if country == DetectCountry.RU:
     return "ru"
   elif country == DetectCountry.BY:
@@ -149,3 +151,5 @@ def __ocr_model(country: DetectCountry):
     return "eu_ua_2004_2015_efficientnet_b2"
   elif country == DetectCountry.EU:
     return "eu_efficientnet_b2"
+  else:
+    raise ValueError(f"Unsupported country: {country.value}")

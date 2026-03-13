@@ -49,8 +49,7 @@ class PrimeSkudWebSession:
 
   async def __download_users_list(self, is_retry: bool) -> bytes:
     if not await self.login():
-      logger.warning(f"Failed to download users list: can't log in")
-      return None
+      raise Exception(f"Can't log in")
 
     url_params = {
       'user_header': '',
@@ -59,27 +58,18 @@ class PrimeSkudWebSession:
       'client_group_id': 1580
       }
 
-    try:
-      async with self._client_session.get('/', params=url_params) as response:
-        if response.status == 200 and response.content_type == 'application/vnd.ms-excel': #OK
-          response_bytes = await response.read()
-          if response_bytes:
-            logger.info(f'Successfully downloaded users list ({len(response_bytes)} bytes)')
-            logger.debug(f'Users list response headers: {response.raw_headers}')
-            return response_bytes
-        
-        if not is_retry:
-          self._logged_in = False
-          logger.warning(f'Failed to download users list. Presumably unauthorized. Retrying...')
+    async with self._client_session.get('/', params=url_params) as response:
+      if response.status == 200 and response.content_type == 'application/vnd.ms-excel': #OK
+        response_bytes = await response.read()
+        if response_bytes:
+          logger.info(f'Successfully downloaded users list ({len(response_bytes)} bytes)')
           logger.debug(f'Users list response headers: {response.raw_headers}')
-          return await self.__download_users_list(is_retry=True)
+          return response_bytes
+      
+      if not is_retry:
+        self._logged_in = False
+        logger.warning(f'Failed to download users list. Presumably unauthorized. Retrying...')
+        logger.debug(f'Users list response headers: {response.raw_headers}')
+        return await self.__download_users_list(is_retry=True)
 
-        logger.error(
-          f'Failed to download users list. Giving up after retry. '
-          f'Response headers: {response.raw_headers}'
-        )
-
-
-    except ClientError as e:
-      logger.warning(f'Failed to download users list: {e}')
-      return None
+      raise Exception(f'Giving up after retry. Response headers: {response.raw_headers}')

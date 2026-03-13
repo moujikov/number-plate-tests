@@ -9,18 +9,17 @@ from .processor import ImagesProcessor
 
 
 async def main():
+  session = SchedulerSession()
+  processor = ImagesProcessor(session)
+
   try:
     await init_database()
-
-    session = SchedulerSession()
-    processor = ImagesProcessor(session)
-
     while True:   # Repeat after the interval or when done, whatever comes LAST
       await asyncio.gather(
         asyncio.sleep(CHECK_PERIOD / 1000),
         processor.process_new_images())
   finally:
-    if session: await session.close()
+    await session.close()
     await release_database()
 
 

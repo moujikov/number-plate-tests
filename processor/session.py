@@ -1,4 +1,5 @@
 import io
+from typing import Any
 from aiohttp import ClientSession, ClientError, ContentTypeError, FormData
 
 from common.types import DetectionDetails
@@ -8,7 +9,7 @@ from . import SCHEDULER_ACCESS_TOKEN, SCHEDULER_URL
 
 class SchedulerSession:
   def __init__(self):
-    self.__client_session = None
+    self.__client_session: ClientSession | None = None
 
   @property
   def _client_session(self) -> ClientSession:
@@ -27,7 +28,7 @@ class SchedulerSession:
       self.__client_session = None
 
 
-  async def detect(self, filename: str, contents: bytes) -> any:
+  async def detect(self, filename: str, contents: bytes) -> dict[str, Any]:
     form_data = FormData()
     form_data.add_field("details", DetectionDetails.FULL)
     # Sending a large body directly with raw bytes might lock the event loop
@@ -42,13 +43,13 @@ class SchedulerSession:
           return await response.json()
         else:
           try:
-            data = await response.json()
+            unexpected_result = await response.json()
           except ContentTypeError:
-            data = await response.text()
+            unexpected_result = await response.text()
 
           return {
             "status": response.status,
-            "data": data
+            "data": unexpected_result
           }
     except ClientError as e:
       logger.debug(f'Error connecting to scheduler: {e}')

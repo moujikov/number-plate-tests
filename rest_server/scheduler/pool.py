@@ -1,6 +1,7 @@
 import time
 
 from asyncio import Event, Queue
+from typing import Any
 
 from common.logging import logger as logger
 from rest_server.common.logging import logger as server_logger
@@ -21,7 +22,7 @@ class WorkersPool:
     for worker in self._workers:
       await worker.close()
 
-  async def schedule_task(self, task: WorkerTask) -> dict:
+  async def schedule_task(self, task: WorkerTask) -> dict[str, Any]:
     worker = None
     try:
       worker = await self._take_worker(task)

@@ -10,19 +10,18 @@ from .loader import PrimeSkudWebLoader
 
 
 async def main():
+  session = PrimeSkudWebSession()
+  users = Users()
+  processor = PrimeSkudWebLoader(session, users)
+
   try:
     await init_database()
-
-    session = PrimeSkudWebSession()
-    users = Users()
-    processor = PrimeSkudWebLoader(session, users)
-
     while True:   # Repeat after the interval or when done, whatever comes LAST
       await asyncio.gather(
         asyncio.sleep(CHECK_PERIOD.to_seconds()),
         processor.update_users())
   finally:
-    if session: await session.close()
+    await session.close()
     await release_database()
 
 

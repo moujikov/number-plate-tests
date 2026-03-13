@@ -7,9 +7,6 @@ from database.models import UserRecord
 
 
 class Users:
-  def __init__(self):
-    pass
-
   async def save_users(self, users: list[UserRecord]):
     filter = UserRecord.filter(removed__isnull=True)
     new_users = set(users)
