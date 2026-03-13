@@ -90,7 +90,7 @@ class DetectionTask(Task):
       await self.__delete()
 
 
-  async def __save_detection(self, number_plate: str, region: str, box: str = None):
+  async def __save_detection(self, number_plate: str, region: str, box: str | None = None):
     detection = Detection(
       timestamp = self._image.timestamp,
       number_plate = number_plate,
@@ -104,7 +104,7 @@ class DetectionTask(Task):
 
   async def __fetch_recent_detections(self) -> set[str]:
     filter = Detection.filter(timestamp__gte = self._image.timestamp - timedelta(seconds=IGNORE_PERIOD))
-    return set(await filter.values_list('number_plate', flat=True))
+    return set([number_plate[0] for number_plate in await filter.values_list('number_plate')])
 
 
   __RU_LETTERS = 'ABEKMHOPCTYX'
@@ -133,7 +133,7 @@ class DetectionTask(Task):
     return detections
 
 
-  async def __move_to_processed(self) -> str:
+  async def __move_to_processed(self):
     await aio_os.makedirs(os.path.join(IMAGES_DIR, self._processed_file_dir), exist_ok=True)
     await aioshutil.move(self._image.path, os.path.join(IMAGES_DIR, self._processed_file_name))
     logger.info(f'Saved {self._image.full_name} to {self._processed_file_name}')
