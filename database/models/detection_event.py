@@ -2,7 +2,7 @@ from tortoise import fields
 from tortoise.models import Model
 from tortoise.indexes import Index
 
-class Detection(Model):
+class DetectionEvent(Model):
   id = fields.UUIDField(primary_key=True)
   timestamp = fields.DatetimeField(null=False)
   number_plate = fields.CharField(max_length=16, null=False)
@@ -13,9 +13,9 @@ class Detection(Model):
   user = fields.ForeignKeyField('models.UserRecord', on_delete = fields.RESTRICT, null=True)
   
   class Meta:
-    table="detections"
+    table="detection_events"
     indexes = [
-      Index(fields=['timestamp'], name='idx_detections_timestamp'),
-      Index(fields=['number_plate'], name='idx_detections_number_plate'),
-      Index(fields=['number_plate','timestamp'], name='idx_detections_number_plate_timestamp'),
+      Index(fields=['timestamp'], name='idx_detection_events_timestamp'),
+      Index(fields=['number_plate'], name='idx_detection_events_number_plate'),
+      Index(fields=['number_plate','timestamp'], name='idx_detection_events_number_plate_timestamp'),
     ]
