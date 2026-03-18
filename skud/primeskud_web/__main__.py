@@ -1,4 +1,6 @@
 import asyncio
+import signal
+import sys
 
 from common.logging import logger
 from database import init_database, release_database
@@ -25,7 +27,17 @@ async def main():
     await release_database()
 
 
+def shutdown(signum, frame):
+  logger.info(f"Received {signal.Signals(signum).name}, shutting down.")
+  sys.exit(0)
+
+signal.signal(signal.SIGTERM, shutdown)
+
+
 try:
   asyncio.run(main())
 except KeyboardInterrupt:
-  pass # Allows graceful exit
+  pass # Graceful exit on Ctrl+C
+except SystemExit:
+  pass # Graceful exit on sys.exit(0)
+
