@@ -7,7 +7,7 @@ DEFAULT_PORT="8000"
 
 usage() {
   cat <<EOF
-Usage: ./test-rest.sh [--base-url <url>] [--file <path> ...] [--token <token>]
+Usage: ./_test/rest.sh [--base-url <url>] [--file <path> ...] [--token <token>]
 
 Options:
   --port, -p      Server port (default: ${DEFAULT_PORT})
@@ -20,11 +20,11 @@ Options:
   --help, -h      Show this help
 
 Examples:
-  ./test-rest.sh
-  ./test-rest.sh all --port 8080
-  ./test-rest.sh --url http://somehost:8080/somepath
-  ./test-rest.sh ru --file ./some.jpg
-  ./test-rest.sh all --file ./test_images --token _TOKEN12345 --details full
+  ./_test/rest.sh
+  ./_test/rest.sh all --port 8080
+  ./_test/rest.sh --url http://somehost:8080/somepath
+  ./_test/rest.sh ru --file ./some.jpg
+  ./_test/rest.sh all --file ./_test/images --token _TOKEN12345 --details full
 EOF
 }
 
@@ -112,7 +112,7 @@ fi
 
 # If no files provided, use all local test images
 if [[ ${#FILES[@]} -eq 0 ]]; then
-  FILES=(./test_images)
+  FILES=(./_test/images)
 fi
 
 # Populate FILES array with files from all directories

@@ -1,5 +1,5 @@
 import time
-from test_images import all_test_image_paths
+from ...images import all_test_image_paths
 from common.types import DetectCountry
 from image_processing.pipelines import pipeline, setup_pipeline
 from image_processing.jpeg import read_local_images

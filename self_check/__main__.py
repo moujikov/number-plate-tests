@@ -75,7 +75,7 @@ start_time = time.perf_counter()
 print(f'Running self-check tests:')
 
 for test in tests:
-  detections = pipeline(read_local_images(f'self_check/test_images/{test["file"]}'))
+  detections = pipeline(read_local_images(f'self_check/images/{test["file"]}'))
   region = detections[0][5][0]
   number_plate = detections[0][8][0]
 

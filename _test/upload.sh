@@ -7,7 +7,7 @@ PORT="21"
 
 usage() {
   cat <<EOF
-Usage: ./test-upload.sh [--base-url <url>] [--file <path> ...] [--token <token>]
+Usage: ./_test/upload.sh [--base-url <url>] [--file <path> ...] [--token <token>]
 
 Options:
   --host, -h        FTP host (default: ${HOST})
@@ -19,9 +19,9 @@ Options:
   --help, -h        Show this help
 
 Examples:
-  ./test-upload.sh
-  ./test-upload.sh --host ftp.somehost.com --user camera-1 --file ./some.jpg
-  ./test-upload.sh --user camera-1 --file ./one.jpg --file ./two.jpg
+  ./_test/upload.sh
+  ./_test/upload.sh --host ftp.somehost.com --user camera-1 --file ./some.jpg
+  ./_test/upload.sh --user camera-1 --file ./one.jpg --file ./two.jpg
 EOF
 }
 
@@ -104,7 +104,7 @@ CURL_ARGS=( --user "$USER:$PASSWORD" )
 
 # If no files provided, use all local test images
 if [[ ${#FILES[@]} -eq 0 ]]; then
-  FILES=(./test_images)
+  FILES=(./_test/images)
 fi
 
 # Populate FILES array with files from all directories
