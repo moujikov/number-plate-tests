@@ -25,16 +25,11 @@ async def main():
     await release_database()
 
 
-def shutdown(signum, frame):
-  logger.info(f"Received {signal.Signals(signum).name}, shutting down.")
-  sys.exit(0)
-
-signal.signal(signal.SIGTERM, shutdown)
-
+signal.signal(signal.SIGTERM, lambda _1, _2: sys.exit(0))
 
 try:
   asyncio.run(main())
-except KeyboardInterrupt:
-  pass # Graceful exit on Ctrl+C
-except SystemExit:
-  pass # Graceful exit on sys.exit(0)
+except KeyboardInterrupt:   # Graceful exit on Ctrl+C
+  logger.info("Received SIGINT (Ctrl+C), shutting down.")
+except SystemExit:          # Graceful exit on sys.exit(0)
+  logger.info(f"Received SIGTERM, shutting down.")

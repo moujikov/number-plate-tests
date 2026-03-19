@@ -1,3 +1,4 @@
+import asyncio
 from aiohttp import ClientSession, ClientError
 
 from common.logging import logger
@@ -7,6 +8,7 @@ from . import PRIME_SKUD_URL, WEB_LOGIN, WEB_PASSWORD
 class PrimeSkudWebSession:
   def __init__(self):
     self.__client_session = None
+    self.__login_lock = asyncio.Lock()
     self._logged_in = False
 
   @property
@@ -23,29 +25,35 @@ class PrimeSkudWebSession:
       self._logged_in = False
 
   async def login(self) -> bool:
-    if self._logged_in:
-      return True
-    
-    url_params = {'unauthorized_header': '', 'user_auth': ''}
-    form_data = {'auth_login': WEB_LOGIN, 'auth_passwd': WEB_PASSWORD}
-    try:
-      async with self._client_session.post('/', params=url_params, data=form_data) as response:
-        if response.status == 200:
-          logger.info(f'Successfully logged in')
-          logger.debug(f'Login response headers: {response.raw_headers}')
-          self._logged_in = True
-        else:
-          logger.warning(f'Failed to log in, response headers: {response.raw_headers}')
-          self._logged_in = False
-    except ClientError as e:
-      logger.warning(f'Failed to log in: {e}')
-      self._logged_in = False
+    async with self.__login_lock:
+      if self._logged_in:
+        return True
 
-    return self._logged_in
+      url_params = {'unauthorized_header': '', 'user_auth': ''}
+      form_data = {'auth_login': WEB_LOGIN, 'auth_passwd': WEB_PASSWORD}
+      try:
+        async with self._client_session.post('/', params=url_params, data=form_data) as response:
+          if response.status == 200:
+            logger.info(f'Successfully logged in')
+            logger.debug(f'Login response headers: {response.raw_headers}')
+            self._logged_in = True
+          else:
+            logger.error(f'Failed to log in, response headers: {response.raw_headers}')
+            self._logged_in = False
+      except ClientError as e:
+        logger.error(f'Failed to log in: {e}')
+        self._logged_in = False
+
+      return self._logged_in
   
 
   async def download_users_list(self) -> bytes:
     return await self.__download_users_list(is_retry=False)
+  
+
+  async def fetch_access_events(self, page: int) -> str:
+    return await self.__fetch_access_events(is_retry=False, page=page)
+
 
   async def __download_users_list(self, is_retry: bool) -> bytes:
     if not await self.login():
@@ -71,5 +79,36 @@ class PrimeSkudWebSession:
         logger.warning(f'Failed to download users list. Presumably unauthorized. Retrying...')
         logger.debug(f'Users list response headers: {response.raw_headers}')
         return await self.__download_users_list(is_retry=True)
+
+      raise Exception(f'Giving up after retry. Response headers: {response.raw_headers}')
+
+
+  async def __fetch_access_events(self, is_retry: bool, page: int) -> str:
+    if not await self.login():
+      raise Exception(f"Can't log in")
+
+    url_params = {
+      'user_header': '',
+      'get_my_access_log_table': '',
+      'object_id': 790,
+      'ident_type': 2,
+      'page': page
+      }
+
+    async with self._client_session.get('/', params=url_params) as response:
+      if response.status == 200 and response.content_type == 'text/html': #OK
+        response_text = await response.text()
+        if response_text:
+          logger.info(
+            f'Successfully fetched access events page #{page+1} ({len(response_text)} characters)')
+          logger.debug(f'Access events response headers: {response.raw_headers}')
+          return response_text
+      
+      if not is_retry:
+        self._logged_in = False
+        logger.warning(
+          f'Failed to fetch access events page #{page+1}. Presumably unauthorized. Retrying...')
+        logger.debug(f'Access events response headers: {response.raw_headers}')
+        return await self.__fetch_access_events(is_retry=True, page=page)
 
       raise Exception(f'Giving up after retry. Response headers: {response.raw_headers}')

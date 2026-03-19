@@ -12,7 +12,7 @@ RUN <<EOF
 
     pip install --upgrade pip
     pip install \
-        aiofiles aiohttp aioshutil asyncio durations pandas tortoise-orm[asyncpg] xlrd
+        aiofiles aiohttp aioshutil asyncio beautifulsoup4 durations html5lib pandas tortoise-orm[asyncpg] xlrd
 EOF
 
 

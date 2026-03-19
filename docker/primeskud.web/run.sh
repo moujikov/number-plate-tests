@@ -2,7 +2,8 @@
 
 set -eu -o pipefail
 
-CHECK_PERIOD=1h
+USERS_CHECK_PERIOD=1h
+ACCESS_CHECK_PERIOD=5m
 
 
 usage() {
@@ -10,10 +11,11 @@ usage() {
 Usage: ./docker/primeskud.web/run.sh [--check-period <period>] [--web-login <login>] ...
 
 Options:
-  --check-period, -cp     New data request frequency (e.g. 5m, 1h, default: ${CHECK_PERIOD})
-  --web-login, -wl        Login for Prime Skud web interface
-  --web-password, -wp     Password for Prime Skud web interface (looked up in secrets if omitted)
-  --help, -h              Show this help
+  --users-check-period, -up    Registered users update frequency (e.g. 5m, 1h, default: ${USERS_CHECK_PERIOD})
+  --access-check-period, -ap   Access events update frequency (e.g. 5m, 1h, default: ${ACCESS_CHECK_PERIOD})
+  --web-login, -wl             Login for Prime Skud web interface
+  --web-password, -wp          Password for Prime Skud web interface (looked up in secrets if omitted)
+  --help, -h                   Show this help
 
 Examples:
   ./docker/primeskud.web/run.sh
@@ -25,12 +27,20 @@ DOCKER_ENV_PARAMS=( -e "PYTHONDEVMODE=1" -e "LOG_LEVEL=DEBUG")
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --check-period|-cp)
-      CHECK_PERIOD=${2:-}
+    --users-check-period|-up)
+      USERS_CHECK_PERIOD=${2:-}
       shift 2
       ;;
-    --check-period=*)
-      CHECK_PERIOD=${1#*=}
+    --users-check-period=*)
+      USERS_CHECK_PERIOD=${1#*=}
+      shift
+      ;;
+    --access-check-period|-ap)
+      ACCESS_CHECK_PERIOD=${2:-}
+      shift 2
+      ;;
+    --access-check-period=*)
+      ACCESS_CHECK_PERIOD=${1#*=}
       shift
       ;;
     --web-login|-wl)
@@ -62,7 +72,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-DOCKER_ENV_PARAMS+=( -e "CHECK_PERIOD=${CHECK_PERIOD}" )
+DOCKER_ENV_PARAMS+=( -e "USERS_CHECK_PERIOD=${USERS_CHECK_PERIOD}" )
+DOCKER_ENV_PARAMS+=( -e "ACCESS_CHECK_PERIOD=${ACCESS_CHECK_PERIOD}" )
 
 if [[ -z "${WEB_PASSWORD:-}" ]]; then
   secret_file="docker/.secrets/primeskud_web_password"

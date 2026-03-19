@@ -3,8 +3,14 @@ from durations import Duration
 from common.logging import logger
 
 
-CHECK_PERIOD = Duration(os.getenv('CHECK_PERIOD', '1h'))
-logger.info(f'Updating registered users list every {CHECK_PERIOD.representation}')
+USERS_CHECK_PERIOD = Duration(os.getenv('USERS_CHECK_PERIOD', '1h'))
+logger.info(f'Updating registered users every {USERS_CHECK_PERIOD.representation}')
+
+ACCESS_CHECK_PERIOD = Duration(os.getenv('ACCESS_CHECK_PERIOD', '5m'))
+logger.info(f'Updating access events every {ACCESS_CHECK_PERIOD.representation}')
+
+ACCESS_PAGES_LIMIT = int(os.getenv('ACCESS_PAGES_LIMIT', '10'))
+logger.info(f'Requesting up to {ACCESS_PAGES_LIMIT} access events pages')
 
 PRIME_SKUD_URL = os.getenv('PRIME_SKUD_URL')
 if PRIME_SKUD_URL:

@@ -1,3 +1,13 @@
+CREATE TABLE "access_events" (
+    "id" UUID NOT NULL PRIMARY KEY,
+    "timestamp" TIMESTAMPTZ NOT NULL,
+    "phone" VARCHAR(16) NOT NULL,
+    "gate" VARCHAR(32) NOT NULL,
+    "success" BOOL NOT NULL
+);
+CREATE INDEX "idx_access_events_timestamp" ON "access_events" ("timestamp");
+CREATE INDEX "idx_access_events_phone" ON "access_events" ("phone");
+
 CREATE TABLE "user_records" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "name" VARCHAR(128) NOT NULL,

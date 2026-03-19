@@ -3,8 +3,10 @@ aiohttp
 aioshutil
 asgi-correlation-id
 asyncio
+beautifulsoup4
 durations
 fastapi
+html5lib
 openpyxl
 pandas
 python-multipart
