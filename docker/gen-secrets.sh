@@ -55,12 +55,13 @@ generate_secret() {
   local file="$1"
   local length=${2:-16}
   local prefix="${3:-}"
-  
+  local permissions="${4:-0600}"
+
   if [ -f "$file" ]; then
     echo "File '$file' already exists."
     echo "Delete it explicitly to regenerate. Skipping..."; echo
   else
-    install -m 0600 /dev/null "$file"
+    install -m "$permissions" /dev/null "$file"
     printf "$prefix" >> "$file"
     (
       set +o pipefail   # Disable pipefail since cat will fail after SIGPIPE when head exits
@@ -72,9 +73,9 @@ generate_secret() {
 
 
 generate_secret docker/.secrets/db_password_postgres 32 __postgres_  
-generate_secret docker/.secrets/db_password_processor 32 __processor_
-generate_secret docker/.secrets/db_password_skud 32 __skud_
-generate_secret docker/.secrets/db_password_frontend 32 __frontend_
+generate_secret docker/.secrets/db_password_processor 32 __processor_ 0644
+generate_secret docker/.secrets/db_password_skud 32 __skud_ 0644
+generate_secret docker/.secrets/db_password_frontend 32 __frontend_ 0644
 
 generate_secret docker/.secrets/scheduler_access_token 48 __scheduler_
 
