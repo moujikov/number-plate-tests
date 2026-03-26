@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu
+set -eu -o pipefail
 
 CAMERAS=2
 WORKERS=2
@@ -60,8 +60,12 @@ generate_secret() {
     echo "File '$file' already exists."
     echo "Delete it explicitly to regenerate. Skipping..."; echo
   else
-    printf "$prefix" > "$file"
-    cat /dev/random | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c $length >> "$file"
+    install -m 0600 /dev/null "$file"
+    printf "$prefix" >> "$file"
+    (
+      set +o pipefail   # Disable pipefail since cat will fail after SIGPIPE when head exits
+      cat /dev/random | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c $length >> "$file"
+    ) || exit $?
     echo "Generated secret in '$file'"; echo
   fi
 }
@@ -90,7 +94,8 @@ if [ -f "$primeskud_web_password" ]; then
 else
   read -s -r -p "Enter Prime Skud web password: " password
   if [ -n "$password" ]; then
-    echo "$password" > "$primeskud_web_password"; echo
+    install -m 0600 /dev/null "$primeskud_web_password"
+    echo "$password" >> "$primeskud_web_password"; echo
     echo "Saved Prime Skud web password to '$primeskud_web_password'"; echo
     unset password
   else
