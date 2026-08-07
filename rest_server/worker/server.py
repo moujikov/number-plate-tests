@@ -131,6 +131,7 @@ def _filter_image_detections(image_name: str, image_detections: list[Any], detai
       confidences = {"box": round(float(detection[0][4]), 6)}
       if len(pipelines.configured_countries) > 1:
         confidences["region"] = round(float(detection[6][0]), 6)
+      confidences["text"] = round(float(detection[6][1]), 6)
       filtered_detection["confidences"] = confidences
 
     if details == DetectionDetails.FULL:
@@ -148,7 +149,7 @@ def _filter_image_detections(image_name: str, image_detections: list[Any], detai
           "detections": filtered_detections
          }
 
-def __int_points(points: Collection):
+def __int_points(points: Collection | float):
   if isinstance(points, Collection):
     return [__int_points(x) for x in points]
   
