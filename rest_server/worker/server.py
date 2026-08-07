@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
   # Startup
   detect_countries = [DetectCountry(c.strip().upper()) for c in DETECT_COUNTRIES.split(',')]
   # Preloading models to avoid first request latency
-  await asyncio.to_thread(pipelines.setup_pipeline, detect_countries)
+  await asyncio.to_thread(pipelines.setup_pipeline, *detect_countries)
 
   common_logger.info('Server ready')
   yield

@@ -8,8 +8,10 @@ from common.logging import logger
 
 
 
-ALL_COUNTRIES = [DetectCountry.RU, DetectCountry.BY, DetectCountry.AM, DetectCountry.GE, 
-                 DetectCountry.KZ, DetectCountry.KG, DetectCountry.UA, DetectCountry.EU]
+ALL_COUNTRIES = (DetectCountry.RU, DetectCountry.BY, 
+                 DetectCountry.AM, DetectCountry.GE, 
+                 DetectCountry.KZ, DetectCountry.KG, 
+                 DetectCountry.UA, DetectCountry.EU)
 
 
 class LockablePipeline():
@@ -29,19 +31,13 @@ __cached_pipeline: LockablePipeline | None = None
 configured_countries: list[DetectCountry] = []
 
 
-def setup_pipeline(countries: list[DetectCountry] | DetectCountry):
+def setup_pipeline(*countries: DetectCountry):
   global __cached_pipeline, configured_countries
 
   if not countries:
     raise ValueError("Countries list cannot be empty")
-  
-  if isinstance(countries, list):
-    configured_countries = countries
-  else:
-    configured_countries = [countries]
     
-  if DetectCountry.ALL in configured_countries:
-    configured_countries = ALL_COUNTRIES
+  configured_countries = list(ALL_COUNTRIES if DetectCountry.ALL in countries else countries)
 
   logger.info(
               f'Preloading recognition models for number plate types:'

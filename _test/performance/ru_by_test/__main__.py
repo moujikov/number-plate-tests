@@ -6,7 +6,7 @@ from image_processing.jpeg import read_local_images
 
 start_time = time.perf_counter()
 print('\nPreloading models...')
-setup_pipeline([DetectCountry.RU, DetectCountry.BY])
+setup_pipeline(DetectCountry.RU, DetectCountry.BY)
 
 elapsed_time = time.perf_counter() - start_time
 print(f'\nDone in {elapsed_time:.2f} sec.')
