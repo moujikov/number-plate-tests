@@ -12,7 +12,14 @@ RUN <<EOF
 
     pip install --upgrade pip
     pip install \
-        aiofiles aiohttp aioshutil asyncio durations python-multipart tortoise-orm[asyncpg]
+        aiofiles \
+        aiohttp \
+        aioshutil \
+        asyncio \
+        durations \
+        opencv-python~=5.0 \
+        python-multipart \
+        tortoise-orm[asyncpg]
 EOF
 
 
