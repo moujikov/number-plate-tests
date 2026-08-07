@@ -4,6 +4,7 @@ aioshutil
 asgi-correlation-id
 asyncio
 beautifulsoup4
+django~=6.1
 durations
 fastapi
 html5lib
