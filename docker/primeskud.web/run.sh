@@ -91,7 +91,8 @@ if [[ -n "${WEB_PASSWORD:-}" ]]; then
 fi
 
 DATABASE_PASSWORD="$(< docker/.secrets/db_password_skud)"
-DOCKER_ENV_PARAMS+=( -e "DATABASE_TYPE=postgres" -e "DATABASE_HOST=host.docker.internal" -e "DATABASE_PORT=5432" -e "DATABASE_NAME=number_plates" -e "DATABASE_USER=skud" -e "DATABASE_PASSWORD=${DATABASE_PASSWORD}" )
+DOCKER_ENV_PARAMS+=( -e "DATABASE_HOST=host.docker.internal" 
+                     -e "DATABASE_PASSWORD=${DATABASE_PASSWORD}" )
 
 
 docker run --rm -t --name number-plates-primeskud.web \

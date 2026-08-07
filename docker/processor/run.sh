@@ -81,7 +81,8 @@ if [[ -n "${SCHEDULER_ACCESS_TOKEN:-}" ]]; then
 fi
 
 DATABASE_PASSWORD="$(< docker/.secrets/db_password_processor)"
-DOCKER_ENV_PARAMS+=( -e "DATABASE_TYPE=postgres" -e "DATABASE_HOST=host.docker.internal" -e "DATABASE_PORT=5432" -e "DATABASE_NAME=number_plates" -e "DATABASE_USER=processor" -e "DATABASE_PASSWORD=${DATABASE_PASSWORD}" )
+DOCKER_ENV_PARAMS+=( -e "DATABASE_HOST=host.docker.internal" 
+                     -e "DATABASE_PASSWORD=${DATABASE_PASSWORD}" )
 
 
 docker run --rm -t --name number-plates-processor \
