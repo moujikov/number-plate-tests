@@ -11,6 +11,7 @@ html5lib
 opencv-python~=5.0
 openpyxl
 pandas
+pytest
 python-multipart
 tortoise-orm[asyncpg]
 xlrd
