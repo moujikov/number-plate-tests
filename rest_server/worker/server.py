@@ -123,7 +123,7 @@ def _filter_image_detections(image_name: str, image_detections: list[Any], detai
   # image = image_detections[0]
   detections = list(zip(*image_detections[1:]))  # skip image itself
   for detection in detections:
-    # expected order of 'detection' elements: [bbox, point, zone, region_id, region_name, count_line, confidence, text]
+    # expected order of 'detection' elements: [bbox, points, crop, region_id, region_name, count_line, confidence, text]
 
     filtered_detection = {}
 

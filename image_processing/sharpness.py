@@ -38,45 +38,52 @@ def measure(img: np.ndarray,
   BORDER_CUTOFF = 0.15
   h, w = img.shape[:2]
   border_width = round(BORDER_CUTOFF * h)
-  no_border = img[border_width:-border_width, border_width:-border_width]
+  sample = img[border_width:-border_width, border_width:-border_width]
+
+  # Convert to grayscale
+  sample = cv.cvtColor(sample, cv.COLOR_BGR2GRAY)
 
   # Unify image sizes (WIDTH=200) to yield consistent sharpness measurements:
-  h, w = no_border.shape[:2]
-  sample = cv.resize(no_border, (SAMPLE_WIDTH, round(h * SAMPLE_WIDTH / w)), interpolation=cv.INTER_CUBIC)
+  h, w = sample.shape[:2]
+  sample = cv.resize(sample, 
+                     (SAMPLE_WIDTH, round(h * SAMPLE_WIDTH / w)), 
+                     interpolation=cv.INTER_CUBIC)
+
+  # Try to fix low contrast since it generally does not affect sharpness
+  # if sample.std() < 30:
+  sample = cv.convertScaleAbs(sample, alpha=2.0)
 
   if method == Method.LAPLACIAN:
-    return __measure_laplacian(sample, save_artifacts)
+    return __measure_laplacian(sample, save_artifacts, img)
 
   if method == Method.DFT:
-    return __measure_fft(sample, save_artifacts)
+    return __measure_fft(sample, save_artifacts, img)
 
   if method == Method.INTEGRAL:
-    return __measure_integral(sample, save_artifacts)
+    return __measure_integral(sample, save_artifacts, img)
 
 
 
 def __measure_laplacian(sample: np.ndarray, 
-                        save_artifacts: str | Path | None = None
+                        save_artifacts: str | Path | None = None,
+                        origin: np.ndarray | None = None
                        ) -> float:
-  grayscale = cv.cvtColor(sample, cv.COLOR_BGR2GRAY)
-  edges = cv.Laplacian(grayscale, cv.CV_16S, ksize=5)
+  edges = cv.Laplacian(sample, cv.CV_16S, ksize=5)
 
   # Filter out noise by applying a Gaussian blur
-  smoothed_edges = cv.GaussianBlur(edges, (3, 3), 0)
-  # smoothed_edges = edges
+  edges = cv.GaussianBlur(edges, (3, 3), 0)
 
-  score = smoothed_edges.var()
-
-  HI_SHARPNESS_THRESHOLD = 500000     # Consider everything above this as ideally sharp
+  score = edges.var()
+  HI_SHARPNESS_THRESHOLD = 1300000     # Consider everything above this as ideally sharp
   n_score = min(score / HI_SHARPNESS_THRESHOLD, 1.0)
 
   if save_artifacts:
-    edges_grayscale = cv.convertScaleAbs(smoothed_edges, alpha = 1/10)
-
-    contrast_rms = sample.std()
+    edges_grayscale = cv.convertScaleAbs(edges, alpha = 1/10)
 
     path = Path(save_artifacts)
-    name = path.parent / f'{path.stem}_c-{contrast_rms:.2f}_s-{score:.0f}_ns-{n_score:.2f}'
+    name = path.parent / f'{path.stem}_c-{score:.0f}_ns-{n_score:.2f}'
+    if origin is not None:
+      cv.imwrite(f'{name}_origin.jpg', origin)
     cv.imwrite(f'{name}_sample.jpg', sample)
     cv.imwrite(f'{name}_edges.jpg', edges_grayscale)
 
@@ -85,12 +92,11 @@ def __measure_laplacian(sample: np.ndarray,
 
 
 def __measure_fft(sample: np.ndarray,
-                  save_artifacts: str | Path | None = None
+                  save_artifacts: str | Path | None = None,
+                  origin: np.ndarray | None = None
                  ) -> float:
-  grayscale = cv.cvtColor(sample, cv.COLOR_BGR2GRAY)
-
   # Split each row into a set of waves using DFT:
-  waves = np.array([np.fft.rfft(row) for row in grayscale])
+  waves = np.array([np.fft.rfft(row) for row in sample])
 
   # Discard zero frequency (first column), phase (imaginary part) and amplitude sign.
   # Leave only pure absolute amplitudes:
@@ -102,7 +108,7 @@ def __measure_fft(sample: np.ndarray,
   mid_frq_amplitudes = amplitudes[:, LO_FRQ_CUTOFF:HI_FRQ_CUTOFF]
 
   score = np.mean(mid_frq_amplitudes)
-  MAX_SCORE = 400     # Consider everything above this as ideally sharp
+  MAX_SCORE = 600     # Consider everything above this as ideally sharp
   n_score = min(score / MAX_SCORE, 1.0)
 
   if save_artifacts:
@@ -114,6 +120,8 @@ def __measure_fft(sample: np.ndarray,
 
     path = Path(save_artifacts)
     name = path.parent / f'{path.stem}_s-{score:.0f}_ns-{n_score:.2f}'
+    if origin is not None:  
+      cv.imwrite(f'{name}_origin.jpg', origin)
     cv.imwrite(f'{name}_sample.jpg', sample)
     cv.imwrite(f'{name}_map.jpg', map)
 
@@ -122,16 +130,17 @@ def __measure_fft(sample: np.ndarray,
 
 
 def __measure_integral(sample: np.ndarray,
-                       save_artifacts: str | Path | None = None
+                       save_artifacts: str | Path | None = None,
+                       origin: np.ndarray | None = None
                       ) -> float:
   measures = []
   measures.append(__measure_laplacian(sample))
   measures.append(__measure_fft(sample))
   n_score = np.mean(measures)
 
-  if save_artifacts:
+  if save_artifacts and origin is not None:
     path = Path(save_artifacts)
     name = path.parent / f'{path.stem}_ns-{n_score:.2f}'
-    cv.imwrite(f'{name}.jpg', sample)
+    cv.imwrite(f'{name}.jpg', origin)
 
   return n_score
