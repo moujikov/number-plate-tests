@@ -1,5 +1,5 @@
 import time
-from ...images import all_test_image_paths
+from ..assets import all_test_image_paths
 from common.types import DetectCountry
 from image_processing.pipelines import pipeline, setup_pipeline
 from image_processing.jpeg import read_local_images
@@ -11,12 +11,13 @@ setup_pipeline(DetectCountry.ALL)
 elapsed_time = time.perf_counter() - start_time
 print(f'\nDone in {elapsed_time:.2f} sec.')
 
+
 start_time = time.perf_counter()
 print('\nProcessing images...')
 
-for image in read_local_images(all_test_image_paths):
+results = pipeline(read_local_images(all_test_image_paths), num_workers=3, batch_size=3)
+for result in results:
     print()
-    result = pipeline([image])[0]
     # image = result[0]
     detections = list(zip(*result[1:]))  # skip image
     for detection in detections:
