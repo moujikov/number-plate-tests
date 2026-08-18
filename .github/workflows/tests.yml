@@ -17,17 +17,25 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Add apt-get sources
+        run: |
+          wget -q -O- https://packagecloud.io/dcommander/libjpeg-turbo/gpgkey | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/libjpeg-turbo.gpg
+          wget -q -O-  https://raw.githubusercontent.com/libjpeg-turbo/repo/main/libjpeg-turbo.list | sudo tee /etc/apt/sources.list.d/libjpeg-turbo.list
+
+      - name: Restore or install system dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          packages: libjpeg-turbo-official
+          version: 1.0
+
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: "3.14"
           cache: pip
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libjpeg-turbo-official
-          pip install -r requirements.txt
+      - name: Install PIP dependencies
+        run: pip install -r requirements.txt
 
       - name: Run tests
         run: pytest -vv --junit-xml=test-results.xml
