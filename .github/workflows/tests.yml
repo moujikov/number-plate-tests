@@ -21,7 +21,7 @@ jobs:
         run: |
           wget -q -O- https://packagecloud.io/dcommander/libjpeg-turbo/gpgkey | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/libjpeg-turbo.gpg >/dev/null
           wget -q -O-  https://raw.githubusercontent.com/libjpeg-turbo/repo/main/libjpeg-turbo.list | sudo tee /etc/apt/sources.list.d/libjpeg-turbo.list >/dev/null
-          sudo apt update
+          sudo apt-get update
 
       - name: Restore or install system dependencies
         uses: awalsh128/cache-apt-pkgs-action@v1.6.3
