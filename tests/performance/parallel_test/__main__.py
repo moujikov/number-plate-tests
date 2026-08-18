@@ -1,12 +1,11 @@
 import time
 from ..assets import all_test_image_paths
 from common.types import DetectCountry
-from image_processing.pipelines import pipeline, setup_pipeline
-from image_processing.jpeg import read_local_images
+from image_processing import jpeg, pipeline
 
 start_time = time.perf_counter()
 print('\nPreloading models...')
-setup_pipeline(DetectCountry.ALL)
+pipeline.setup(DetectCountry.ALL)
 
 elapsed_time = time.perf_counter() - start_time
 print(f'\nDone in {elapsed_time:.2f} sec.')
@@ -15,7 +14,7 @@ print(f'\nDone in {elapsed_time:.2f} sec.')
 start_time = time.perf_counter()
 print('\nProcessing images...')
 
-results = pipeline(read_local_images(all_test_image_paths), num_workers=3, batch_size=3)
+results = pipeline.call(jpeg.read_local_images(all_test_image_paths), num_workers=3, batch_size=3)
 for result in results:
     print()
     # image = result[0]

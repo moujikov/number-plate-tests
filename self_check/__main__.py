@@ -1,7 +1,6 @@
 import time
 from common.types import DetectCountry
-from image_processing.pipelines import pipeline, setup_pipeline
-from image_processing.jpeg import read_local_images
+from image_processing import jpeg, detections
 
 failed = False
 
@@ -69,24 +68,31 @@ tests = [
 ]
 
 print(f'Downloading models:')
-setup_pipeline(DetectCountry.ALL)  # Preload all models
+detections.setup(DetectCountry.ALL)  # Preload all models
 
 start_time = time.perf_counter()
 print(f'Running self-check tests:')
 
 for test in tests:
-  detections = pipeline(read_local_images(f'self_check/images/{test["file"]}'))
-  region = detections[0][5][0]
-  number_plate = detections[0][8][0]
-
   country = test["country"]
   expected_region = test["region"]
   expected_number_plate = test["number_plate"]
 
-  if region == expected_region and number_plate == expected_number_plate:
-    print(f'✔️ {country}: successfully read number plate {expected_number_plate}')
-  else:
-    print(f'❌ {country}: error reading number plate {expected_number_plate} [{expected_region}], got {number_plate} [{region}] instead')
+  results = detections.detect(jpeg.read_local_image(f'self_check/images/{test["file"]}'))
+
+  found = False
+  for result in results:
+    region = result["region"]
+    number_plate = result["text"]
+
+    if region == expected_region and number_plate == expected_number_plate:
+      print(f'✔️ {country}: successfully read number plate {expected_number_plate}')
+      found = True
+      break
+
+  if not found:
+    print(f'❌ {country}: error reading number plate {expected_number_plate} – '
+          f'got {", ".join([f'{r["text"]} [{r["region"]}]' for r in results])} instead')
     failed = True
 
 print(f'---------------------------------')

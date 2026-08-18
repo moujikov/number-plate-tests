@@ -8,14 +8,13 @@ from urllib import parse as urlparse
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile,  status
 from fastapi.security import OAuth2PasswordBearer
+from numpy import ndarray
 
 from common.logging import logger as common_logger
 from common.types import DetectionDetails, DetectCountry
 from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
-from image_processing.jpeg import read_image
-import image_processing.pipelines as pipelines
-
+from image_processing import jpeg, detections
 from . import DETECT_COUNTRIES, MAX_CONCURRENT_REQUESTS
 
 
@@ -25,7 +24,7 @@ async def lifespan(app: FastAPI):
   # Startup
   detect_countries = [DetectCountry(c.strip().upper()) for c in DETECT_COUNTRIES.split(',')]
   # Preloading models to avoid first request latency
-  await asyncio.to_thread(pipelines.setup_pipeline, *detect_countries)
+  await detections.setup_async(*detect_countries)
 
   common_logger.info('Server ready')
   yield
@@ -82,75 +81,36 @@ async def _with_concurrency_check(task: Awaitable) -> Any:
 
 
 async def _detect(upload_files: list[UploadFile], details: DetectionDetails) -> dict[str, Any]:
-  filenames = [urlparse.unquote(f.filename) if f.filename else '(unknown)' for f in upload_files]
-  logger.debug(f'Processing files: {", ".join(filenames)}')
+  names = [urlparse.unquote(f.filename) if f.filename else '' for f in upload_files]
+  logger.debug(f'Processing files: {", ".join(names)}')
 
   try:
     images = await _read_request_images(upload_files)
-    detections = await asyncio.to_thread(pipelines.pipeline, images)
-    return _detection_response(filenames, detections, details)
+    results = await detections.detect_async(images, names = names, details = details)
+
+    number_plates_digest: list[str] = []
+    for image_detections in results:
+      name = image_detections["image"];
+      plates = [detection["text"] for detection in image_detections["detections"]]
+      number_plates_digest.append(f'{name} – {", ".join(plates)}')
+    
+    logger.info(f"Detected number plates: {"; ".join(number_plates_digest)}")
+    logger.debug(f'Full detection results: {"; ".join([str(r) for r in results])}')
+
+    return {"images": results}
   except Exception as e:
     log_exception(e)
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))
 
 
-async def _read_request_images(upload_files: list[UploadFile]) -> list[Any]:
-  images = []
+async def _read_request_images(upload_files: list[UploadFile]) -> list[ndarray]:
+  images: list[ndarray] = []
   for upload_file in upload_files:
     try:
       jpg_image = await upload_file.read()
-      decoded_image = await asyncio.to_thread(read_image, jpg_image)
+      decoded_image = await jpeg.read_image_async(jpg_image)
       images.append(decoded_image)
     finally:
       await upload_file.close()
 
   return images
-
-
-def _detection_response(
-    filenames: list[str], detections: list[Any], details: DetectionDetails) -> dict[str, Any]:
-  results = [_filter_image_detections(pair[0], pair[1], details) 
-             for pair in zip(filenames, detections)]
-  logger.debug(f'Returning detection results: {", ".join([str(r) for r in results])}')
-  return {"images": results}
-
-
-def _filter_image_detections(image_name: str, image_detections: list[Any], details: DetectionDetails) -> dict[str, Any]:
-  filtered_detections = []
-  detected_number_plates = []
-
-  # expected 'image_detections' structure: [image, [bboxes], [points], etc... , [texts]]
-  # image = image_detections[0]
-  detections = list(zip(*image_detections[1:]))  # skip image itself
-  for detection in detections:
-    # expected order of 'detection' elements: [bbox, points, crop, region_id, region_name, count_line, confidence, text]
-
-    filtered_detection = {}
-
-    if details == DetectionDetails.FULL or details == DetectionDetails.CONFIDENCE:
-      confidences = {"box": round(float(detection[0][4]), 6)}
-      if len(pipelines.configured_countries) > 1:
-        confidences["region"] = round(float(detection[6][0]), 6)
-      confidences["text"] = round(float(detection[6][1]), 6)
-      filtered_detection["confidences"] = confidences
-
-    if details == DetectionDetails.FULL:
-      filtered_detection["box"] = __int_points(detection[1])
-
-    filtered_detection["region"] = detection[4]
-    
-    filtered_detection["text"] = detection[7]
-    detected_number_plates.append(detection[7])
-    filtered_detections.append(filtered_detection)
-
-  logger.info(f'Image {image_name} detections: {", ".join(detected_number_plates)}')
-  return {
-          "image": image_name,
-          "detections": filtered_detections
-         }
-
-def __int_points(points: Collection | float):
-  if isinstance(points, Collection):
-    return [__int_points(x) for x in points]
-  
-  return round(points)

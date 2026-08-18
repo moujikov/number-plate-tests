@@ -1,7 +1,8 @@
+import warnings
 from typing import Callable
 from threading import Lock
-
-from nomeroff_net import pipeline as __pipeline
+from matplotlib.pylab import ndarray
+import nomeroff_net
 
 from common.types import DetectCountry
 from common.logging import logger
@@ -31,7 +32,7 @@ __cached_pipeline: LockablePipeline | None = None
 configured_countries: list[DetectCountry] = []
 
 
-def setup_pipeline(*countries: DetectCountry):
+def setup(*countries: DetectCountry):
   global __cached_pipeline, configured_countries
 
   if not countries:
@@ -47,24 +48,28 @@ def setup_pipeline(*countries: DetectCountry):
   __cached_pipeline([]) # Preload models to avoid first request latency
 
 
-def pipeline(inputs, **kwargs):
+def call(inputs: list[ndarray], **kwargs):
   if __cached_pipeline is None:
     raise Exception("Pipeline is not initialized")
-  detections = __cached_pipeline(inputs, **kwargs)
-  try:
-    for detection in detections:
-      if len(detection) > 5:
-        regions = detection[5]
-        for i in range(len(regions)):
-          regions[i] = __region_for_country_class(regions[i])
-  except IndexError:
-    pass
+  
+  with warnings.catch_warnings(action="ignore"):  # Ignore detection warnings e.g. 'unknown region'
+    detections = __cached_pipeline(inputs, **kwargs)
+
+  for detection in detections:
+    if len(detection) > 5:
+      regions = detection[5]
+      for i in range(len(regions)):
+        detected_country = __country_by_class(regions[i])
+        if detected_country and detected_country in configured_countries:
+          regions[i] = detected_country.value
+        else:
+          regions[i] = "unknown"
 
   return detections
 
 
 
-def __create_pipeline(countries: list[DetectCountry]):
+def __create_pipeline(countries: list[DetectCountry]) -> Callable:
   classes = __number_plate_classes(countries)
 
   presets = dict()
@@ -75,19 +80,19 @@ def __create_pipeline(countries: list[DetectCountry]):
       "model_path": "latest"
     }
 
-  return __pipeline("number_plate_detection_and_reading",
-    presets = presets,
-    classification_options = {
-      "class_region": classes,
-      "count_lines": [1]
-    },
-    default_label = classes[0],
-    default_lines_count = 1,
-    upscaling = False,
-    off_number_plate_classification = (len(classes) == 1)
-    )
+  return nomeroff_net.pipeline("number_plate_detection_and_reading",
+                               presets = presets,
+                               classification_options = {
+                                 "class_region": classes,
+                                 "count_lines": [1]
+                               },
+                               default_label = classes[0],
+                               default_lines_count = 1,
+                               upscaling = False,
+                               off_number_plate_classification = (len(classes) == 1)
+                              )
 
-def __number_plate_classes(countries: list[DetectCountry]):
+def __number_plate_classes(countries: list[DetectCountry]) -> list[str]:
   return [region for country in countries for region in __country_classes(country)]
 
 def __country_classes(country: DetectCountry) -> list[str]:  
@@ -110,25 +115,25 @@ def __country_classes(country: DetectCountry) -> list[str]:
   else: 
     raise ValueError(f"Unsupported country: {country.value}")
 
-def __region_for_country_class(class_name: str) -> str:  
+def __country_by_class(class_name: str) -> DetectCountry | None:  
   if class_name == "ru":
-    return DetectCountry.RU.value
+    return DetectCountry.RU
   elif class_name == "by":
-    return DetectCountry.BY.value
+    return DetectCountry.BY
   elif class_name == "am":
-    return DetectCountry.AM.value
+    return DetectCountry.AM
   elif class_name == "ge":
-    return DetectCountry.GE.value
+    return DetectCountry.GE
   elif class_name == "kz":
-    return DetectCountry.KZ.value
+    return DetectCountry.KZ
   elif class_name == "kg":
-    return DetectCountry.KG.value
+    return DetectCountry.KG
   elif class_name == "eu_ua_2004" or class_name == "eu_ua_2015":
-    return DetectCountry.UA.value
+    return DetectCountry.UA
   elif class_name == "eu":
-    return DetectCountry.EU.value
+    return DetectCountry.EU
   else:
-    return class_name
+    return None
 
 def __ocr_model(country: DetectCountry) -> str:  
   if country == DetectCountry.RU:
