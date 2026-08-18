@@ -90,14 +90,14 @@ async def _detect(upload_files: list[UploadFile], details: DetectionDetails) -> 
 
     number_plates_digest: list[str] = []
     for image_detections in results:
-      name = image_detections["image"];
-      plates = [detection["text"] for detection in image_detections["detections"]]
+      name = image_detections['image']
+      plates = [detection['text'] for detection in image_detections['detections']]
       number_plates_digest.append(f'{name} – {", ".join(plates)}')
     
-    logger.info(f"Detected number plates: {"; ".join(number_plates_digest)}")
+    logger.info(f'Detected number plates: {"; ".join(number_plates_digest)}')
     logger.debug(f'Full detection results: {"; ".join([str(r) for r in results])}')
 
-    return {"images": results}
+    return {'images': results}
   except Exception as e:
     log_exception(e)
     raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))

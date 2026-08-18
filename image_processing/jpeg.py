@@ -22,7 +22,6 @@ def read_local_image(file: str) -> ndarray:
 
 def read_local_images(files: List[str]) -> List[ndarray]:
   images = []
-  if isinstance(files, str): files = [files]
   for file in files:
     with open(file, "rb") as f:
       images.append(read_image(f.read()))
