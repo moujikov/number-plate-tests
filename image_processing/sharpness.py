@@ -16,6 +16,7 @@ class Method(Enum):
 SAMPLE_WIDTH = 200
 
 def measure(img: np.ndarray, 
+            *,
             method: Method = Method.INTEGRAL, 
             save_artifacts: str | Path | None = None
            ) -> float:

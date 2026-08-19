@@ -10,6 +10,7 @@ ARTIFACTS = '.tests-artifacts/sharpness'
 @fixture(scope='package')
 def clear_artifacts():
   shutil.rmtree(ARTIFACTS, ignore_errors=True)
+  os.makedirs(ARTIFACTS)
 
 
 @fixture
@@ -35,9 +36,9 @@ class AssertSharpness:
     if img is None:
       raise FileNotFoundError(f"Image not found: {path}")
 
-    dir = f'{ARTIFACTS}/{self._method.name.lower()}'
-    os.makedirs(dir, exist_ok=True)
-    result = sharpness.measure(img, 
-                               method=self._method,
-                               save_artifacts=f'{dir}/{self._category}-{self._number_plate}-{self._variant}.jpg')
+    art_dir = f'{ARTIFACTS}/{self._method.name.lower()}'
+    art_file = f'{art_dir}/{self._category}-{self._number_plate}-{self._variant}.jpg'
+    os.makedirs(art_dir, exist_ok=True)
+
+    result = sharpness.measure(img, method=self._method, save_artifacts=art_file)
     assert result == approx(self._expected, abs=0.05)

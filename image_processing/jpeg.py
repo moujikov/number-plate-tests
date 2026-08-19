@@ -1,8 +1,7 @@
 import asyncio
 from typing import List
 from numpy import ndarray
-from turbojpeg import TurboJPEG
-from turbojpeg import TJPF_RGB
+from turbojpeg import TurboJPEG, TJPF_RGB
 
 __jpeg = TurboJPEG()
 

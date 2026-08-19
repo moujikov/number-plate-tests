@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   test:
+    name: Run unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -23,11 +24,14 @@ jobs:
 
       - name: Add apt-get sources
         run: |
-          wget -q -O- https://packagecloud.io/dcommander/libjpeg-turbo/gpgkey | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/libjpeg-turbo.gpg >/dev/null
-          wget -q -O-  https://raw.githubusercontent.com/libjpeg-turbo/repo/main/libjpeg-turbo.list | sudo tee /etc/apt/sources.list.d/libjpeg-turbo.list >/dev/null
+          wget -q -O- https://packagecloud.io/dcommander/libjpeg-turbo/gpgkey | \
+            gpg --dearmor | \
+            sudo tee /etc/apt/trusted.gpg.d/libjpeg-turbo.gpg >/dev/null
+          wget -q -O-  https://raw.githubusercontent.com/libjpeg-turbo/repo/main/libjpeg-turbo.list | \
+            sudo tee /etc/apt/sources.list.d/libjpeg-turbo.list >/dev/null
           sudo apt-get update
 
-      - name: Restore or install system dependencies
+      - name: Install system dependencies
         uses: awalsh128/cache-apt-pkgs-action@v1.6.3
         with:
           packages: libjpeg-turbo-official

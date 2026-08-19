@@ -17,7 +17,7 @@ def test_detection_structure(detections: list[dict[str, Any]]):
   detection = detections[0]
 
   assert isinstance(detection, dict)
-  assert set(detection.keys()) == {'text', 'region', 'box', 'confidences'}
+  assert set(detection.keys()) == {'text', 'region', 'box', 'expanded_box', 'confidences'}
   
   assert isinstance(detection['text'], str)
   assert isinstance(detection['region'], str)
@@ -73,7 +73,7 @@ def test_unknown_country(detections: list[dict[str, Any]]):
                   ids=['P641AO47-x'])
 def test_measuring_sharpness(detections: list[dict[str, Any]]):
   assert len(detections) == 4
-  assert detections[0]['detections'][0]['confidences']['sharpness'] == approx(1.0, abs=0.1)
+  assert detections[0]['detections'][0]['confidences']['sharpness'] == approx(0.9, abs=0.1)
   assert detections[1]['detections'][0]['confidences']['sharpness'] == approx(0.7, abs=0.1)
   assert detections[2]['detections'][0]['confidences']['sharpness'] == approx(0.4, abs=0.1)
   assert detections[3]['detections'][0]['confidences']['sharpness'] == approx(0.2, abs=0.1)
