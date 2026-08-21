@@ -57,7 +57,7 @@ def _detect_in_one(image: np.ndarray | str | Path,
                   ) -> list[dict[str, Any]]:
   read_image = _read_image(image)
   detections = pipeline.call([read_image])[0]
-  return _process_detections(read_image, detections, details, save_artifacts)
+  return _process_detections(detections, details, save_artifacts)
 
 
 def _detect_in_all(images: list[np.ndarray] | list[str] | list[Path],
@@ -70,8 +70,7 @@ def _detect_in_all(images: list[np.ndarray] | list[str] | list[Path],
 
   detections = pipeline.call(read_images)
   return [
-      _process_named_detections(image,
-                                image_name if image_name else f'image_{i+1}', 
+      _process_named_detections(image_name if image_name else f'image_{i+1}', 
                                 image_detections,
                                 details,
                                 save_artifacts)
@@ -80,8 +79,7 @@ def _detect_in_all(images: list[np.ndarray] | list[str] | list[Path],
     ]
 
 
-def _process_named_detections(image: np.ndarray,
-                              name: str,
+def _process_named_detections(name: str,
                               detections: list[Any], 
                               details: DetectionDetails,
                               save_artifacts: str | Path | None = None
@@ -92,19 +90,15 @@ def _process_named_detections(image: np.ndarray,
 
   return {
     'image': name,
-    'detections': _process_detections(image, detections, details, save_artifacts)
+    'detections': _process_detections(detections, details, save_artifacts)
   }
 
-def _process_detections(image: np.ndarray,
-                        detections: list[Any], 
+def _process_detections(detections: list[Any], 
                         details: DetectionDetails,
                         save_artifacts: str | Path | None = None,
                        ) -> list[dict[str, Any]]:
   filtered_detections = []
-
-  marks_image: np.ndarray = np.ndarray([])
-  if save_artifacts:
-    marks_image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
+  marks_image = None
 
   # Expected 'detections' structure: [image, [bboxes], [points], etc... , [texts]]
   # We'll skip image and iterate over detections one by one:
@@ -114,13 +108,13 @@ def _process_detections(image: np.ndarray,
     filtered_detection = {}
 
     if details == DetectionDetails.FULL or details == DetectionDetails.CONFIDENCE:
-      name = ''
+      save_artifacts_crop = ''
       if save_artifacts:
         path = Path(save_artifacts)
-        name = path.parent / f'{path.stem}_crop-{text}'
+        save_artifacts_crop = path.parent / f'{path.stem}_crop-{text}.jpg'
 
       crop_bgr = cv.cvtColor(crop, cv.COLOR_RGB2BGR)
-      sharpness_score = sharpness.measure(crop_bgr, save_artifacts=name)
+      sharpness_score = sharpness.measure(crop_bgr, save_artifacts=save_artifacts_crop)
 
       confidences = {
         'box': round(float(bbox[4]), 6),
@@ -137,13 +131,15 @@ def _process_detections(image: np.ndarray,
       filtered_detection['expanded_box'] = __round_points(expanded_points)
 
     if save_artifacts:
+      if marks_image is None: 
+        marks_image = cv.cvtColor(detections[0], cv.COLOR_RGB2BGR)
       __draw_polyline(marks_image, expanded_points)
 
     filtered_detection['region'] = region_name
     filtered_detection['text'] = text
     filtered_detections.append(filtered_detection)
 
-  if save_artifacts:
+  if marks_image is not None:
     cv.imwrite(str(save_artifacts), marks_image)
 
   return filtered_detections
