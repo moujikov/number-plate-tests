@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Any
+from typing import Any, overload
 import cv2 as cv
 import numpy as np
 
@@ -24,6 +24,18 @@ async def detect_async(images: np.ndarray | str | Path | list[np.ndarray] | list
                        details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = None
                       ) -> list[dict[str, Any]]:
+  """
+  Detect and decode number plates in an image.
+
+  Args:
+    images: input image(s), RGB format expected.
+    names: optional image names.
+    details: DetectionDetails, the level of details to return.
+    save_artifacts: path to a filename (.jpg) to save detection details to.
+
+  Returns:
+    a list of dictionaries containing detection results for each input image.
+  """
   return await asyncio.to_thread(detect, 
                                  images, 
                                  names = names, 
@@ -37,18 +49,32 @@ def detect(images: np.ndarray | str | Path | list[np.ndarray] | list[str] | list
            details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = None
           ) -> list[dict[str, Any]]:
+  """
+  Detect and decode number plates in an image.
+
+  Args:
+    images: input image(s), RGB format expected.
+    names: optional image names.
+    details: DetectionDetails, the level of details to return.
+    save_artifacts: path to a filename (.jpg) to save detection details to.
+
+  Returns:
+    a list of dictionaries containing detection results for each input image.
+  """
+  
   if isinstance(images, list):
     return _detect_in_all(images, names, details, save_artifacts)
   return _detect_in_one(images, details, save_artifacts)
 
 
 def _read_image(image: np.ndarray | str | Path) -> np.ndarray:
-  if isinstance(image, (str, Path)):
-    read_image = cv.imread(str(image))
-    assert read_image is not None
-    image = read_image
+  if isinstance(image, np.ndarray):
+    return image
 
-  return cv.cvtColor(image, cv.COLOR_BGR2RGB)  # Underlying model expects RGB
+  read_image = cv.imread(str(image), cv.IMREAD_COLOR_RGB)
+  assert read_image is not None
+  return read_image
+
 
 def _read_images(images: list[np.ndarray] | list[str] | list[Path]) -> list[np.ndarray]:
   return [_read_image(image) for image in images]
@@ -116,8 +142,7 @@ def _process_detections(detections: list[Any],
         path = Path(save_artifacts)
         save_artifacts_crop = path.parent / f'{path.stem}_crop-{text}.jpg'
 
-      crop_bgr = cv.cvtColor(crop, cv.COLOR_RGB2BGR)
-      sharpness_score = sharpness.measure(crop_bgr, save_artifacts=save_artifacts_crop)
+      sharpness_score = sharpness.measure(crop, save_artifacts=save_artifacts_crop)
 
       confidences = {
         'box': round(float(bbox[4]), 6),

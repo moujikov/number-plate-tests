@@ -8,7 +8,7 @@ from image_processing import sharpness
 ARTIFACTS = '.tests-artifacts/sharpness' 
 
 @fixture(scope='package')
-def clear_artifacts():
+def setup_run():
   shutil.rmtree(ARTIFACTS, ignore_errors=True)
   os.makedirs(ARTIFACTS)
 
@@ -16,7 +16,7 @@ def clear_artifacts():
 @fixture
 def assert_sharpness(category: str, number_plate: str, variant: str, 
                      method: sharpness.Method, expected: float, 
-                     clear_artifacts):
+                     setup_run):
   return AssertSharpness(category, number_plate, variant, method, expected)
 
 
@@ -32,7 +32,7 @@ class AssertSharpness:
 
   def eval(self):
     path = Path('tests/sharpness/assets/') / self._category / self._number_plate / ( self._variant + '.jpg' )
-    img = cv.imread(path)
+    img = cv.imread(path, cv.IMREAD_COLOR_RGB)
     if img is None:
       raise FileNotFoundError(f"Image not found: {path}")
 

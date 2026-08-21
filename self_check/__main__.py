@@ -1,6 +1,8 @@
 import time
+import cv2 as cv
+
 from common.types import DetectCountry
-from image_processing import jpeg, detections
+from image_processing import detections
 
 failed = False
 
@@ -78,7 +80,9 @@ for test in tests:
   expected_region = test["region"]
   expected_number_plate = test["number_plate"]
 
-  results = detections.detect(jpeg.read_local_image(f'self_check/images/{test["file"]}'))
+  image = cv.imread(f'self_check/images/{test["file"]}', cv.IMREAD_COLOR_RGB)
+  assert image is not None
+  results = detections.detect(image)
 
   found = False
   for result in results:

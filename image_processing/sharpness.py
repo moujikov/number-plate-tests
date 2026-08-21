@@ -15,7 +15,7 @@ class Method(Enum):
 
 SAMPLE_WIDTH = 200
 
-def measure(img: np.ndarray, 
+def measure(image: np.ndarray, 
             *,
             method: Method = Method.INTEGRAL, 
             save_artifacts: str | Path | None = None
@@ -24,9 +24,9 @@ def measure(img: np.ndarray,
   Measure the sharpness of a number plate image.
 
   Args:
-    img: np.ndarray, the input image with cropped number plate.
-    method: a method to use, INTEGRAL uses all methods and returns mean result
-    save_artifacts: path to base filename (.jpg) to save intermediate artifacts to (images, edges, etc.).
+    image: the input image with cropped number plate, RGB format expected.
+    method: a method to use, INTEGRAL uses all methods and returns mean result.
+    save_artifacts: path to a filename (.jpg) to save measurement details to.
 
   Returns:
     a floating point score from 0.0 (blurriest) to 1.0 (sharpest).
@@ -37,12 +37,12 @@ def measure(img: np.ndarray,
 
   # Cut outer edge where a numberplate border can affect analisys:
   BORDER_CUTOFF = 0.15
-  h, w = img.shape[:2]
+  h, w = image.shape[:2]
   border_width = round(BORDER_CUTOFF * h)
-  sample = img[border_width:-border_width, border_width:-border_width]
+  sample = image[border_width:-border_width, border_width:-border_width]
 
   # Convert to grayscale
-  sample = cv.cvtColor(sample, cv.COLOR_BGR2GRAY)
+  sample = cv.cvtColor(sample, cv.COLOR_RGB2GRAY)
 
   # Unify image sizes (WIDTH=200) to yield consistent sharpness measurements:
   h, w = sample.shape[:2]
@@ -55,13 +55,13 @@ def measure(img: np.ndarray,
   sample = cv.convertScaleAbs(sample, alpha=2.0)
 
   if method == Method.LAPLACIAN:
-    return __measure_laplacian(sample, save_artifacts, img)
+    return __measure_laplacian(sample, save_artifacts, image)
 
   if method == Method.DFT:
-    return __measure_fft(sample, save_artifacts, img)
+    return __measure_fft(sample, save_artifacts, image)
 
   if method == Method.INTEGRAL:
-    return __measure_integral(sample, save_artifacts, img)
+    return __measure_integral(sample, save_artifacts, image)
 
 
 
@@ -84,7 +84,7 @@ def __measure_laplacian(sample: np.ndarray,
     path = Path(save_artifacts)
     name = path.parent / f'{path.stem}_c-{score:.0f}_ns-{n_score:.2f}'
     if origin is not None:
-      cv.imwrite(f'{name}_origin.jpg', origin)
+      cv.imwrite(f'{name}_origin.jpg', cv.cvtColor(origin, cv.COLOR_RGB2BGR))
     cv.imwrite(f'{name}_sample.jpg', sample)
     cv.imwrite(f'{name}_edges.jpg', edges_grayscale)
 
@@ -116,13 +116,14 @@ def __measure_fft(sample: np.ndarray,
     map = cv.convertScaleAbs(np.real(amplitudes), alpha = 1/8)
     map = cv.cvtColor(map, cv.COLOR_GRAY2BGR)
     h = map.shape[0]
-    cv.line(map, (LO_FRQ_CUTOFF, 0), (LO_FRQ_CUTOFF, h), (0, 0, 255), 1)
-    cv.line(map, (HI_FRQ_CUTOFF, 0), (HI_FRQ_CUTOFF, h), (0, 0, 255), 1)
+    RED = (0, 0, 255)
+    cv.line(map, (LO_FRQ_CUTOFF, 0), (LO_FRQ_CUTOFF, h), RED, 1)
+    cv.line(map, (HI_FRQ_CUTOFF, 0), (HI_FRQ_CUTOFF, h), RED, 1)
 
     path = Path(save_artifacts)
     name = path.parent / f'{path.stem}_s-{score:.0f}_ns-{n_score:.2f}'
     if origin is not None:  
-      cv.imwrite(f'{name}_origin.jpg', origin)
+      cv.imwrite(f'{name}_origin.jpg', cv.cvtColor(origin, cv.COLOR_RGB2BGR))
     cv.imwrite(f'{name}_sample.jpg', sample)
     cv.imwrite(f'{name}_map.jpg', map)
 
@@ -142,6 +143,6 @@ def __measure_integral(sample: np.ndarray,
   if save_artifacts and origin is not None:
     path = Path(save_artifacts)
     name = path.parent / f'{path.stem}_ns-{n_score:.2f}'
-    cv.imwrite(f'{name}.jpg', origin)
+    cv.imwrite(f'{name}.jpg', cv.cvtColor(origin, cv.COLOR_RGB2BGR))
 
   return n_score
