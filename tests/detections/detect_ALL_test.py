@@ -1,7 +1,7 @@
-from typing import Any
+from typing import Any, Callable
+import cv2 as cv
 from pytest import fixture, mark
 
-from common.types import DetectionDetails
 from image_processing import detections as __detections
 
   
@@ -68,3 +68,20 @@ def test_EU(detections: list[dict[str, Any]]):
   assert {detection['text'] for detection in detections[1]['detections']} == {'396KGR'}
   assert {detection['text'] for detection in detections[2]['detections']} == {'EGL076'}
 
+
+def test_BGR_image_detection_succeeds(asset: Callable, artifact: Callable, setup_run, setup):
+  image = cv.imread(asset('KG'), cv.IMREAD_COLOR_BGR)
+  assert image is not None
+  detections = __detections.detect(image, save_artifacts=artifact())
+  assert len(detections) == 1
+  assert detections[0]['region'] == 'KG'
+  assert detections[0]['text'] == '04892AAH'
+
+
+def test_RGB_image_detection_may_fail(asset: Callable, artifact: Callable, setup_run, setup):
+  image = cv.imread(asset('KG'), cv.IMREAD_COLOR_RGB)
+  assert image is not None
+  detections = __detections.detect(image, save_artifacts=artifact())
+  assert len(detections) == 1
+  assert detections[0]['region'] != 'KG'
+  assert detections[0]['text'] != '04892AAH'

@@ -5,7 +5,7 @@ import cv2 as cv
 import numpy as np
 
 from common.types import DetectCountry, DetectionDetails
-from image_processing import jpeg, sharpness
+from image_processing import sharpness
 from . import pipeline 
 
 
@@ -43,9 +43,12 @@ def detect(images: np.ndarray | str | Path | list[np.ndarray] | list[str] | list
 
 
 def _read_image(image: np.ndarray | str | Path) -> np.ndarray:
-  if isinstance(image, np.ndarray):
-    return image
-  return jpeg.read_local_image(str(image))
+  if isinstance(image, (str, Path)):
+    read_image = cv.imread(str(image))
+    assert read_image is not None
+    image = read_image
+
+  return cv.cvtColor(image, cv.COLOR_BGR2RGB)  # Underlying model expects RGB
 
 def _read_images(images: list[np.ndarray] | list[str] | list[Path]) -> list[np.ndarray]:
   return [_read_image(image) for image in images]
@@ -193,8 +196,9 @@ def __intersection_point(line1: tuple[tuple[float, float], tuple[float, float]],
 
 LINE_COLOR = (0, 255, 0)
 LINE_THICKNESS_FACTOR = 0.02
+MIN_LINE_THICKNESS = 2
 def __draw_polyline(image: np.ndarray, points: list[tuple[float, float]]):
-  thickness = round(__box_size(points) * LINE_THICKNESS_FACTOR)
+  thickness = max(round(__box_size(points) * LINE_THICKNESS_FACTOR), MIN_LINE_THICKNESS)
   cv.polylines(image, 
                [np.array(points, dtype=np.int32)], 
                isClosed=True, color=LINE_COLOR, 

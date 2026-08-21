@@ -1,7 +1,6 @@
 from typing import Any
 from pytest import fixture, mark
 
-from common.types import DetectionDetails
 from image_processing import detections as __detections
 
   

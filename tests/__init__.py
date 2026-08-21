@@ -1,7 +1,3 @@
-import os
+from common import utils
 
-if not os.path.exists('.tests-artifacts'):
-  os.makedirs(f'.tests-artifacts')
-  
-  with open('.tests-artifacts/.gitignore', 'w') as f:
-    f.write('*\n')
+utils.make_temp_dir('.tests-artifacts')

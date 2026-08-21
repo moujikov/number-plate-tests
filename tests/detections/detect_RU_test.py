@@ -3,7 +3,6 @@ from pytest import approx, fixture, mark
 
 from common.types import DetectionDetails
 from image_processing import detections as __detections
-
   
 @fixture(scope='module')
 def setup():
@@ -77,3 +76,6 @@ def test_measuring_sharpness(detections: list[dict[str, Any]]):
   assert detections[1]['detections'][0]['confidences']['sharpness'] == approx(0.7, abs=0.1)
   assert detections[2]['detections'][0]['confidences']['sharpness'] == approx(0.4, abs=0.1)
   assert detections[3]['detections'][0]['confidences']['sharpness'] == approx(0.2, abs=0.1)
+
+  
+  
