@@ -1,7 +1,9 @@
 import time
+
+from image_processing.number_plates import pipeline
 from ..assets import all_test_image_paths
 from common.types import DetectCountry
-from image_processing import jpeg, pipeline
+from image_processing import jpeg
 
 start_time = time.perf_counter()
 print('\nPreloading models...')

@@ -1,13 +1,13 @@
 import os
 import shutil
 from typing import Callable
-from pytest import approx, fixture, FixtureRequest
-from image_processing import detections as __detections
+from pytest import fixture, FixtureRequest
+from image_processing import number_plates
 from common.types import DetectionDetails
 
 
-ASSETS = 'tests/detections/assets'
-ARTIFACTS = '.tests-artifacts/detections' 
+ASSETS = 'tests/number_plates/detections/assets'
+ARTIFACTS = '.tests-artifacts/number_plates/detections'
 
 @fixture(scope='package')
 def setup_run():
@@ -43,12 +43,12 @@ def detections(*,
                setup_run, setup):
 
   if isinstance(images, list):
-    return __detections.detect(
+    return number_plates.detect(
       [asset(image) for image in images],
       details=details, 
       save_artifacts=artifact())
   
-  return __detections.detect(
+  return number_plates.detect(
     asset(images),
     details=details, 
     save_artifacts=artifact())

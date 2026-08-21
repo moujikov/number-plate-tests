@@ -3,9 +3,10 @@ import cv2 as cv
 import os
 import shutil
 from pytest import approx, fixture
-from image_processing import sharpness
+from image_processing.number_plates import sharpness
 
-ARTIFACTS = '.tests-artifacts/sharpness' 
+ASSETS = 'tests/number_plates/sharpness/assets' 
+ARTIFACTS = '.tests-artifacts/number_plates/sharpness' 
 
 @fixture(scope='package')
 def setup_run():
@@ -31,7 +32,7 @@ class AssertSharpness:
     self._expected = expected
 
   def eval(self):
-    path = Path('tests/sharpness/assets/') / self._category / self._number_plate / ( self._variant + '.jpg' )
+    path = Path(ASSETS) / self._category / self._number_plate / ( self._variant + '.jpg' )
     img = cv.imread(path, cv.IMREAD_COLOR_RGB)
     if img is None:
       raise FileNotFoundError(f"Image not found: {path}")

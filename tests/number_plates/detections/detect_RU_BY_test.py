@@ -1,12 +1,13 @@
 from typing import Any
 from pytest import fixture, mark
 
-from image_processing import detections as __detections
+from common.types import DetectCountry
+from image_processing import number_plates
 
   
 @fixture(scope='module')
 def setup():
-  __detections.setup(__detections.DetectCountry.RU, __detections.DetectCountry.BY)
+  number_plates.setup(DetectCountry.RU, DetectCountry.BY) 
 
 
 

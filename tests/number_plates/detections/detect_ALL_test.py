@@ -2,12 +2,13 @@ from typing import Any, Callable
 import cv2 as cv
 from pytest import fixture, mark
 
-from image_processing import detections as __detections
+from common.types import DetectCountry
+from image_processing import number_plates
 
   
 @fixture(scope='module')
 def setup():
-  __detections.setup(__detections.DetectCountry.ALL)
+  number_plates.setup(DetectCountry.ALL)
 
 
 
@@ -72,7 +73,7 @@ def test_EU(detections: list[dict[str, Any]]):
 def test_RGB_image_detection_succeeds(asset: Callable, artifact: Callable, setup_run, setup):
   image = cv.imread(asset('KG'), cv.IMREAD_COLOR_RGB)
   assert image is not None
-  detections = __detections.detect(image, save_artifacts=artifact())
+  detections = number_plates.detect(image, save_artifacts=artifact())
   assert len(detections) == 1
   assert detections[0]['region'] == 'KG'
   assert detections[0]['text'] == '04892AAH'
@@ -81,7 +82,7 @@ def test_RGB_image_detection_succeeds(asset: Callable, artifact: Callable, setup
 def test_BGR_image_detection_may_fail(asset: Callable, artifact: Callable, setup_run, setup):
   image = cv.imread(asset('KG'), cv.IMREAD_COLOR_BGR)
   assert image is not None
-  detections = __detections.detect(image, save_artifacts=artifact())
+  detections = number_plates.detect(image, save_artifacts=artifact())
   assert len(detections) == 1
   assert detections[0]['region'] != 'KG'
   assert detections[0]['text'] != '04892AAH'

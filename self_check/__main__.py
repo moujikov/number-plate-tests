@@ -2,7 +2,7 @@ import time
 import cv2 as cv
 
 from common.types import DetectCountry
-from image_processing import detections
+from image_processing import number_plates
 
 failed = False
 
@@ -70,7 +70,7 @@ tests = [
 ]
 
 print(f'Downloading models:')
-detections.setup(DetectCountry.ALL)  # Preload all models
+number_plates.setup(DetectCountry.ALL)  # Preload all models
 
 start_time = time.perf_counter()
 print(f'Running self-check tests:')
@@ -80,12 +80,12 @@ for test in tests:
   expected_region = test["region"]
   expected_number_plate = test["number_plate"]
 
-  results = detections.detect(f'self_check/images/{test["file"]}')
+  detections = number_plates.detect(f'self_check/images/{test["file"]}')
 
   found = False
-  for result in results:
-    region = result["region"]
-    number_plate = result["text"]
+  for detection in detections:
+    region = detection["region"]
+    number_plate = detection["text"]
 
     if region == expected_region and number_plate == expected_number_plate:
       print(f'✔️ {country}: successfully read number plate {expected_number_plate}')
@@ -94,7 +94,7 @@ for test in tests:
 
   if not found:
     print(f'❌ {country}: error reading number plate {expected_number_plate} – '
-          f'got {", ".join([f'{r["text"]} [{r["region"]}]' for r in results])} instead')
+          f'got {", ".join([f'{r["text"]} [{r["region"]}]' for r in detections])} instead')
     failed = True
 
 print(f'---------------------------------')

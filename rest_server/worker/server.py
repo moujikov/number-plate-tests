@@ -2,7 +2,6 @@ import asyncio
 from typing import Any
 from contextlib import asynccontextmanager
 from collections.abc import Awaitable
-from typing import Collection
 from urllib import parse as urlparse
 
 from asgi_correlation_id import CorrelationIdMiddleware
@@ -12,9 +11,9 @@ from numpy import ndarray
 
 from common.logging import logger as common_logger
 from common.types import DetectionDetails, DetectCountry
+from image_processing import jpeg, number_plates
 from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
-from image_processing import jpeg, detections
 from . import DETECT_COUNTRIES, MAX_CONCURRENT_REQUESTS
 
 
@@ -24,7 +23,7 @@ async def lifespan(app: FastAPI):
   # Startup
   detect_countries = [DetectCountry(c.strip().upper()) for c in DETECT_COUNTRIES.split(',')]
   # Preloading models to avoid first request latency
-  await detections.setup_async(*detect_countries)
+  await number_plates.setup_async(*detect_countries)
 
   common_logger.info('Server ready')
   yield
@@ -86,7 +85,7 @@ async def _detect(upload_files: list[UploadFile], details: DetectionDetails) -> 
 
   try:
     images = await _read_request_images(upload_files)
-    results = await detections.detect_async(images, names = names, details = details)
+    results = await number_plates.detect_async(images, names = names, details = details)
 
     number_plates_digest: list[str] = []
     for image_detections in results:

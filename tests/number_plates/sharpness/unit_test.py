@@ -1,5 +1,5 @@
 from pytest import mark
-from image_processing import sharpness
+from image_processing.number_plates import sharpness
 
 @mark.parametrize(['method', 'category', 'number_plate', 'variant', 'expected'], [
   (sharpness.Method.LAPLACIAN, 'artificial', 'T256HT198', 'motion_blur_0', 1.00),

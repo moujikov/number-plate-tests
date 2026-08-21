@@ -2,12 +2,10 @@ import asyncio
 from pathlib import Path
 from typing import Any, overload
 import cv2 as cv
-from matplotlib import image
 import numpy as np
 
 from common.types import DetectCountry, DetectionDetails
-from image_processing import sharpness
-from . import pipeline 
+from . import pipeline, sharpness
 
 
 
