@@ -80,9 +80,7 @@ for test in tests:
   expected_region = test["region"]
   expected_number_plate = test["number_plate"]
 
-  image = cv.imread(f'self_check/images/{test["file"]}', cv.IMREAD_COLOR_RGB)
-  assert image is not None
-  results = detections.detect(image)
+  results = detections.detect(f'self_check/images/{test["file"]}')
 
   found = False
   for result in results:

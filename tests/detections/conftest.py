@@ -45,7 +45,6 @@ def detections(*,
   if isinstance(images, list):
     return __detections.detect(
       [asset(image) for image in images],
-      names=images,
       details=details, 
       save_artifacts=artifact())
   
