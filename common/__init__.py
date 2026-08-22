@@ -1,6 +1,6 @@
 import os
 
-LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'WARNING').upper()
 SYSTEM_LOG_LEVEL = os.getenv('SYSTEM_LOG_LEVEL', 'WARNING').upper()
 TZ = os.getenv('TZ', 'UTC')
 
