@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 import numpy as np
 from typing import Any, overload
@@ -6,6 +7,7 @@ from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
 from common import utils
+from common.models import ImageWithVehicles, Vehicle, VehicleType
 
 
 CONFIDENCE = 0.5
@@ -27,52 +29,104 @@ def setup():
   else:
     DEVICE = 'cpu'
 
+@overload
+async def detect_async(source: np.ndarray | str | Path,
+                 *,
+                 save_artifacts: str | Path | None = None
+                ) -> list[Vehicle]:
+  ...
 
+@overload
+async def detect_async(source: list[np.ndarray],
+                 *,
+                 names: list[str] | None = None,
+                 save_artifacts: str | Path | None = None,
+                ) -> list[ImageWithVehicles]:
+  ...
+
+@overload
+async def detect_async(source: list[str] | list[Path],
+                 *,
+                 save_artifacts: str | Path | None = None,
+                ) -> list[ImageWithVehicles]:
+  ...
+
+async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
+                       *,
+                       names: list[str] | None = None,
+                       save_artifacts: str | Path | None = None
+                      ) -> list[ImageWithVehicles] | list[Vehicle]:
+  return await asyncio.to_thread(_detect, source, names, save_artifacts)
+
+
+@overload
+def detect(source: np.ndarray | str | Path,
+           *,
+           save_artifacts: str | Path | None = None
+          ) -> list[Vehicle]:
+  ...
+
+@overload
+def detect(source: list[np.ndarray],
+           *,
+           names: list[str] | None = None,
+           save_artifacts: str | Path | None = None,
+          ) -> list[ImageWithVehicles]:
+  ...
+
+@overload
+def detect(source: list[str] | list[Path],
+           *,
+           save_artifacts: str | Path | None = None,
+          ) -> list[ImageWithVehicles]:
+  ...
 
 def detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
            *,
            names: list[str] | None = None,
            save_artifacts: str | Path | None = None
-          ) -> list[dict[str, Any]]:
+          ) -> list[ImageWithVehicles] | list[Vehicle]:
+  return _detect(source, names, save_artifacts)
+
+
+def _detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
+            names: list[str] | None,
+            save_artifacts: str | Path | None
+           ) -> list[ImageWithVehicles] | list[Vehicle]:
   assert __model is not None
   detections = __model.predict(source,
-                               conf=CONFIDENCE, iou=IOU, end2end=False, device=DEVICE,
+                               conf=CONFIDENCE, iou=IOU, end2end=True, device=DEVICE,
+                               # Detect only known vehicle types:
+                               classes=[v.value for v in VehicleType],
+                               # Treat all vehicle types equally during NMS, i.e. if we detect car and bus with almost matching boxes – take only one of them:
+                               agnostic_nms=True,
                                save=bool(save_artifacts), save_dir=save_artifacts,
                                # Due to a bug in YOLO 'save_dir' will be cached and never updated unless 'project' or 'name' are also set:
                                name='dummy')
+  if not isinstance(source, list) and len(list(detections)) == 1:
+    return detected_vehicles(list(detections)[0])
 
-  results = []
-  if not names: names = ['' for _ in detections]
-  for image_name, image_detections in zip(names, detections, strict=True):
-    assert isinstance(image_detections, Results)
-    assert image_detections.boxes
+  if not names:
+    if isinstance(source, list):
+      names = [Path(src).stem if isinstance(src, str | Path) else f'image_{i+1}' 
+               for i, src in enumerate(source)]
+    else:
+      names = [f'image_{i+1}' for i, _ in enumerate(detections)]
 
-    if not image_name:
-      if isinstance(image_detections.orig_img, str | Path):
-        image_name = Path(image_detections.orig_img).stem
-      else:
-        image_name = f'image_{len(results)+1}'
+  return [
+    ImageWithVehicles(image_name, detected_vehicles(image_detections))
+    for image_name, image_detections
+    in zip(names, detections, strict=True)
+  ]
 
-    image_results = []
-    for cls, box, confidence in zip(
-      image_detections.boxes.cls, 
-      image_detections.boxes.xyxy,
-      image_detections.boxes.conf):
-      vehicle: str
-      if cls == 2: vehicle = 'car'
-      elif cls == 5: vehicle = 'bus'
-      elif cls == 7: vehicle = 'truck'
-      else: continue
 
-      image_results.append({
-        'vehicle': vehicle,
-        'box': box.tolist(),
-        'confidence': confidence.item(),
-      })
-
-    results.append({
-      'image': image_name,
-      'detections': image_results
-    })
-
-  return results
+def detected_vehicles(results: Any) -> list[Vehicle]:
+  assert isinstance(results, Results)
+  if not results.boxes: return []
+  return [
+    Vehicle(cls, box, confidence)
+    for cls, box, confidence 
+    in zip(results.boxes.cls, 
+           results.boxes.xyxy, 
+           results.boxes.conf)
+  ]
