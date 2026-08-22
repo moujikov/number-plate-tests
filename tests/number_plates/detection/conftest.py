@@ -6,8 +6,8 @@ from image_processing import number_plates
 from common.types import DetectionDetails
 
 
-ASSETS = 'tests/number_plates/detections/assets'
-ARTIFACTS = '.tests-artifacts/number_plates/detections'
+ASSETS = 'tests/number_plates/detection/assets'
+ARTIFACTS = '.tests-artifacts/number_plates/detection'
 
 @fixture(scope='package')
 def setup_run():

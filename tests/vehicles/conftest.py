@@ -1,8 +1,8 @@
 import os
 import shutil
 from typing import Callable
-from pytest import fixture, FixtureRequest
-from common.models import ImageWithVehicles, Vehicle
+from pytest import fixture
+from common.models import ImageWithVehicles, DetectedVehicle
 from image_processing import vehicles
 
 
@@ -26,7 +26,7 @@ def asset():
 def detections(*, 
                images: str | list[str],
                asset: Callable[[str], str],
-               setup_run) -> list[ImageWithVehicles] | list[Vehicle]:
+               setup_run) -> list[ImageWithVehicles] | list[DetectedVehicle]:
 
   if isinstance(images, list):
     return vehicles.detect(

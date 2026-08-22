@@ -1,3 +1,3 @@
-from .vehicles import ImageWithVehicles, Vehicle, VehicleType
+from .detection.vehicles import ImageWithVehicles, DetectedVehicle
 
-__all__ = ['ImageWithVehicles', 'Vehicle', 'VehicleType']
+__all__ = ['ImageWithVehicles', 'DetectedVehicle']

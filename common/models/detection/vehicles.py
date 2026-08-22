@@ -1,16 +1,16 @@
 from enum import Enum
 
 from torch import Tensor
-
-class VehicleType(Enum):
-  CAR = 2
-  BUS = 5
-  TRUCK = 7
   
 
-class Vehicle:
+class DetectedVehicle:
+  class Type(Enum):
+    CAR = 2
+    BUS = 5
+    TRUCK = 7
+
   def __init__(self, type: Tensor, box: Tensor, conf: Tensor):
-    self.type = VehicleType(int(type))
+    self.type = self.Type(int(type))
     self.box = [round(float(t)) for t in box]
     self.conf = float(conf)
 
@@ -21,7 +21,7 @@ class Vehicle:
 
 
 class ImageWithVehicles:
-  def __init__(self, name: str, vehicles: list[Vehicle]):
+  def __init__(self, name: str, vehicles: list[DetectedVehicle]):
     self.name = name
     self.vehicles = vehicles
 

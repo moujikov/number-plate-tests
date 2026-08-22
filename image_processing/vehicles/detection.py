@@ -7,7 +7,7 @@ from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
 from common import utils
-from common.models import ImageWithVehicles, Vehicle, VehicleType
+from common.models import ImageWithVehicles, DetectedVehicle
 
 
 CONFIDENCE = 0.5
@@ -33,7 +33,7 @@ def setup():
 async def detect_async(source: np.ndarray | str | Path,
                  *,
                  save_artifacts: str | Path | None = None
-                ) -> list[Vehicle]:
+                ) -> list[DetectedVehicle]:
   ...
 
 @overload
@@ -55,7 +55,7 @@ async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list
                        *,
                        names: list[str] | None = None,
                        save_artifacts: str | Path | None = None
-                      ) -> list[ImageWithVehicles] | list[Vehicle]:
+                      ) -> list[ImageWithVehicles] | list[DetectedVehicle]:
   return await asyncio.to_thread(_detect, source, names, save_artifacts)
 
 
@@ -63,7 +63,7 @@ async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list
 def detect(source: np.ndarray | str | Path,
            *,
            save_artifacts: str | Path | None = None
-          ) -> list[Vehicle]:
+          ) -> list[DetectedVehicle]:
   ...
 
 @overload
@@ -85,19 +85,19 @@ def detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list
            *,
            names: list[str] | None = None,
            save_artifacts: str | Path | None = None
-          ) -> list[ImageWithVehicles] | list[Vehicle]:
+          ) -> list[ImageWithVehicles] | list[DetectedVehicle]:
   return _detect(source, names, save_artifacts)
 
 
 def _detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
             names: list[str] | None,
             save_artifacts: str | Path | None
-           ) -> list[ImageWithVehicles] | list[Vehicle]:
+           ) -> list[ImageWithVehicles] | list[DetectedVehicle]:
   assert __model is not None
   detections = __model.predict(source,
                                conf=CONFIDENCE, iou=IOU, end2end=True, device=DEVICE,
                                # Detect only known vehicle types:
-                               classes=[v.value for v in VehicleType],
+                               classes=[v.value for v in DetectedVehicle.Type],
                                # Treat all vehicle types equally during NMS, i.e. if we detect car and bus with almost matching boxes – take only one of them:
                                agnostic_nms=True,
                                save=bool(save_artifacts), save_dir=save_artifacts,
@@ -120,11 +120,11 @@ def _detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | lis
   ]
 
 
-def detected_vehicles(results: Any) -> list[Vehicle]:
+def detected_vehicles(results: Any) -> list[DetectedVehicle]:
   assert isinstance(results, Results)
   if not results.boxes: return []
   return [
-    Vehicle(cls, box, confidence)
+    DetectedVehicle(cls, box, confidence)
     for cls, box, confidence 
     in zip(results.boxes.cls, 
            results.boxes.xyxy, 
