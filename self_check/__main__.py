@@ -78,23 +78,23 @@ print(f'Running self-check tests:')
 for test in tests:
   country = test["country"]
   expected_region = test["region"]
-  expected_number_plate = test["number_plate"]
+  expected_text = test["number_plate"]
 
   detections = number_plates.detect(f'self_check/images/{test["file"]}')
 
   found = False
-  for detection in detections:
-    region = detection["region"]
-    number_plate = detection["text"]
+  for number_plate in detections:
+    region = number_plate.region
+    text = number_plate.text
 
-    if region == expected_region and number_plate == expected_number_plate:
-      print(f'✔️ {country}: successfully read number plate {expected_number_plate}')
+    if region == expected_region and text == expected_text:
+      print(f'✔️ {country}: successfully read number plate {expected_text}')
       found = True
       break
 
   if not found:
-    print(f'❌ {country}: error reading number plate {expected_number_plate} – '
-          f'got {", ".join([f'{r["text"]} [{r["region"]}]' for r in detections])} instead')
+    print(f'❌ {country}: error reading number plate {expected_text} – '
+          f'got {", ".join([f'{r.text} [{r.region}]' for r in detections])} instead')
     failed = True
 
 print(f'---------------------------------')

@@ -89,8 +89,8 @@ async def _detect(upload_files: list[UploadFile], details: DetectionDetails) -> 
 
     number_plates_digest: list[str] = []
     for image_detections in results:
-      name = image_detections['image']
-      plates = [detection['text'] for detection in image_detections['detections']]
+      name = image_detections.name
+      plates = [number_plate.text for number_plate in image_detections.number_plates]
       number_plates_digest.append(f'{name} – {", ".join(plates)}')
     
     logger.info(f'Detected number plates: {"; ".join(number_plates_digest)}')

@@ -1,10 +1,12 @@
 import asyncio
+import os
 from pathlib import Path
-from typing import Any, overload
+from typing import overload
 import cv2 as cv
 import numpy as np
 
 from common.types import DetectCountry, DetectionDetails
+from common.models import DetectedNumberPlate, ImageWithNumberPlates
 from . import pipeline, sharpness
 
 
@@ -20,8 +22,8 @@ def setup(*countries: DetectCountry):
 async def detect_async(source: np.ndarray | str | Path,
                        *,
                        details: DetectionDetails = DetectionDetails.FULL,
-                       save_artifacts: str | Path | None = None
-                      ) -> list[dict[str, Any]]:
+                       save_artifacts: str | Path | None = ...
+                      ) -> list[DetectedNumberPlate]:
   """
   Async detect and decode number plates in an image.
 
@@ -40,8 +42,8 @@ async def detect_async(source: np.ndarray | str | Path,
 async def detect_async(source: list[str] | list[Path],
                        *,
                        details: DetectionDetails = DetectionDetails.FULL,
-                       save_artifacts: str | Path | None = None
-                      ) -> list[dict[str, Any]]:
+                       save_artifacts: str | Path | None = ...
+                      ) -> list[ImageWithNumberPlates]:
   """
   Async detect and decode number plates in images.
 
@@ -51,7 +53,7 @@ async def detect_async(source: list[str] | list[Path],
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
-    a list of dictionaries containing detection results for each input image.
+    a list of detection results for each input image.
   """
   ...
 
@@ -59,10 +61,10 @@ async def detect_async(source: list[str] | list[Path],
 @overload
 async def detect_async(source: list[np.ndarray],
                        *,
-                       names: list[str] | None = None,
+                       names: list[str] | None = ...,
                        details: DetectionDetails = DetectionDetails.FULL,
-                       save_artifacts: str | Path | None = None
-                      ) -> list[dict[str, Any]]:
+                       save_artifacts: str | Path | None = ...
+                      ) -> list[ImageWithNumberPlates]:
   """
   Async detect and decode number plates in images.
 
@@ -73,7 +75,7 @@ async def detect_async(source: list[np.ndarray],
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
-    a list of dictionaries containing detection results for each input image.
+    a list of detection results for each input image.
   """
   ...
 
@@ -83,8 +85,8 @@ async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list
                        names: list[str] | None = None,
                        details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = None
-                      ) -> list[dict[str, Any]]:
-  return await asyncio.to_thread(_detect, source, names, details, save_artifacts)
+                      ) -> list[DetectedNumberPlate] | list[ImageWithNumberPlates]:
+  return await asyncio.to_thread(_detect, source, names, save_artifacts)
 
 
 @overload
@@ -92,7 +94,7 @@ def detect(source: np.ndarray | str | Path,
            *,
            details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = ...
-          ) -> list[dict[str, Any]]:
+          ) -> list[DetectedNumberPlate]:
   """
   Detect and decode number plates in an image.
 
@@ -113,7 +115,7 @@ def detect(source: list[np.ndarray],
            names: list[str] | None = ...,
            details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = ...
-          ) -> list[dict[str, Any]]:
+          ) -> list[ImageWithNumberPlates]:
   """
   Detect and decode number plates in images.
 
@@ -124,7 +126,7 @@ def detect(source: list[np.ndarray],
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
-    a list of dictionaries containing detection results for each input image.
+    a list of detection results for each input image.
   """
   ...
 
@@ -134,7 +136,7 @@ def detect(source: list[str] | list[Path],
            *,
            details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = ...
-          ) -> list[dict[str, Any]]:
+          ) -> list[ImageWithNumberPlates]:
   """
   Detect and decode number plates in images.
 
@@ -144,7 +146,7 @@ def detect(source: list[str] | list[Path],
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
-    a list of dictionaries containing detection results for each input image.
+    a list of detection results for each input image.
   """
   ...
 
@@ -154,61 +156,54 @@ def detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list
            names: list[str] | None = None,
            details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = None
-          ) -> list[dict[str, Any]]:
-  return _detect(source, names, details, save_artifacts)
+          ) -> list[DetectedNumberPlate] | list[ImageWithNumberPlates]:
+  return _detect(source, names, save_artifacts)
 
 
 def _detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
             names: list[str] | None,
-            details: DetectionDetails,
             save_artifacts: str | Path | None
-           ) -> list[dict[str, Any]]:
+           ) -> list[DetectedNumberPlate] | list[ImageWithNumberPlates]:
   if isinstance(source, list):
-    return _detect_in_many(source, names, details, save_artifacts)
-  return _detect_in_one(source, details, save_artifacts)
+    return _detect_in_many(source, names, save_artifacts)
+  return _detect_in_one(source, save_artifacts)
 
 
 def _detect_in_one(image: np.ndarray | str | Path,
-                   details: DetectionDetails,
                    save_artifacts: str | Path | None
-                  ) -> list[dict[str, Any]]:
-  detections = _get_detections_for_image(image)
-  return _process_detections(detections, details, save_artifacts)
+                  ) -> list[DetectedNumberPlate]:
+  return _process_detections(_get_detections_for_image(image),
+                             save_artifacts,
+                             _image_name(image))
 
 
 def _detect_in_many(images: list[np.ndarray] | list[str] | list[Path],
                     names: list[str] | None,
-                    details: DetectionDetails,
                     save_artifacts: str | Path | None
-                   ) -> list[dict[str, Any]]:
+                   ) -> list[ImageWithNumberPlates]:
   if not names: names = ['' for _ in images]
   return [
-    _detect_in_one_of_many(image, image_name, index, details, save_artifacts)
-    for image, image_name, index
+    _detect_in_one_of_many(image, name, index, save_artifacts)
+    for image, name, index
     in zip(images, names, range(len(images)), strict=True)
   ]
 
+
 def _detect_in_one_of_many(image: np.ndarray | str | Path, 
                            name: str, index: int,
-                           details: DetectionDetails,
                            save_artifacts: str | Path | None
-                          ) -> dict[str, Any]:
-  if not name:
-    if isinstance(image, str | Path):
-      name = Path(image).stem
-    else:
-      name = f'image_{index+1}'
+                          ) -> ImageWithNumberPlates:
+  name = _image_name(image, index+1, name)
+  number_plates = _process_detections(_get_detections_for_image(image), 
+                                      save_artifacts, name)
+  return ImageWithNumberPlates(name, number_plates)
 
-  if save_artifacts:
-      path = Path(save_artifacts)
-      save_artifacts = path.parent / f'{path.stem}_{name}.jpg'
 
-  detections = _get_detections_for_image(image)
-
-  return {
-    'image': name,
-    'detections': _process_detections(detections, details, save_artifacts)
-  }
+def _image_name(image: np.ndarray | str | Path, num: int = 0, name: str = '') -> str:
+  if name: return name
+  if isinstance(image, str | Path): return Path(image).stem
+  if num: return f'image_{num}'
+  return 'image'
 
 
 def _get_detections_for_image(image: np.ndarray | str | Path) -> list:
@@ -220,59 +215,49 @@ def _get_detections_for_image(image: np.ndarray | str | Path) -> list:
   return pipeline.call([image])[0]
 
 
-def _process_detections(detections: list, 
-                        details: DetectionDetails,
-                        save_artifacts: str | Path | None
-                       ) -> list[dict[str, Any]]:
-  filtered_detections = []
+def _process_detections(detections: list,
+                        save_artifacts: str | Path | None,
+                        name: str
+                       ) -> list[DetectedNumberPlate]:
+  detected_number_plates: list[DetectedNumberPlate] = []
+
   marks_image = None
+  if save_artifacts:
+    os.makedirs(save_artifacts, exist_ok=True)
+    marks_image = cv.cvtColor(detections[0], cv.COLOR_RGB2BGR)
 
   # Expected 'detections' structure: [image, [bboxes], [points], etc... , [texts]]
   # We'll skip image and iterate over detections one by one:
   for bbox, points, crop, region_id, region_name, count_line, confidence, text \
       in zip(*detections[1:], strict=True):
 
-    filtered_detection = {}
-
-    if details == DetectionDetails.FULL or details == DetectionDetails.CONFIDENCE:
-      save_artifacts_crop = ''
-      if save_artifacts:
-        path = Path(save_artifacts)
-        save_artifacts_crop = path.parent / f'{path.stem}_crop-{text}.jpg'
-
-      sharpness_score = sharpness.measure(crop, save_artifacts=save_artifacts_crop)
-
-      confidences = {
-        'box': round(float(bbox[4]), 6),
-        'sharpness': round(sharpness_score, 6),
-      }
-      if len(pipeline.configured_countries) > 1:
-        confidences['region'] = round(float(confidence[0]), 6)
-        confidences['text'] = round(float(confidence[1]), 6)
-      filtered_detection['confidences'] = confidences
-
     expanded_points = __expand(points)
-    if details == DetectionDetails.FULL:
-      filtered_detection['box'] = __round_points(points)
-      filtered_detection['expanded_box'] = __round_points(expanded_points)
+    save_artifacts_crop = ''
 
-    if save_artifacts:
-      if marks_image is None: 
-        marks_image = cv.cvtColor(detections[0], cv.COLOR_RGB2BGR)
+    if save_artifacts and marks_image is not None:
       __draw_polyline(marks_image, expanded_points)
 
-    filtered_detection['region'] = region_name
-    filtered_detection['text'] = text
-    filtered_detections.append(filtered_detection)
+      save_artifacts_crop = Path(save_artifacts) / f'{name}_crop-{text}.jpg'
 
-  if marks_image is not None:
-    cv.imwrite(str(save_artifacts), marks_image)
+    sharpness_score = sharpness.measure(crop, save_artifacts=save_artifacts_crop)
 
-  return filtered_detections
+    conf = DetectedNumberPlate.Confidences(box=float(bbox[4]),
+                                           sharpness=sharpness_score)
+    if len(pipeline.configured_countries) > 1:
+      conf.region = float(confidence[0])
+      conf.text = float(confidence[1])
 
+    detected_number_plate = DetectedNumberPlate(region=region_name,
+                                                text=text,
+                                                box=points,
+                                                expanded=expanded_points,
+                                                conf=conf)
+    detected_number_plates.append(detected_number_plate)
 
-def __round_points(points: list[tuple[float, float]]) -> list[tuple[int, int]]:
-  return [(round(x[0]), round(x[1])) for x in points]
+  if save_artifacts and marks_image is not None:
+    res = cv.imwrite(Path(save_artifacts) / f'{name}.jpg', marks_image)
+
+  return detected_number_plates
 
 
 def __box_size(points: list[tuple[float, float]]) -> float:

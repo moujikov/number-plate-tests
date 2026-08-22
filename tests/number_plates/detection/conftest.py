@@ -3,6 +3,7 @@ import shutil
 from typing import Any, Callable
 from pytest import fixture, FixtureRequest
 from image_processing import number_plates
+from common.models import ImageWithNumberPlates, DetectedNumberPlate
 from common.types import DetectionDetails
 
 
@@ -12,7 +13,6 @@ ARTIFACTS = '.tests-artifacts/number_plates/detection'
 @fixture(scope='package')
 def setup_run():
   shutil.rmtree(ARTIFACTS, ignore_errors=True)
-  os.makedirs(ARTIFACTS)
 
 @fixture
 def asset():
@@ -21,13 +21,11 @@ def asset():
   return __asset
 
 @fixture
-def artifact(request: FixtureRequest):
-  def __artifact() -> str:
-    art_dir = f'{ARTIFACTS}/{request.node.parent.name.removesuffix(".py")}'
-    os.makedirs(art_dir, exist_ok=True)
-    return f'{art_dir}/{request.node.originalname}.jpg'
+def artifacts(request: FixtureRequest):
+  def __artifacts() -> str:
+    return f'{ARTIFACTS}/{request.node.parent.name.removesuffix(".py")}'
 
-  return __artifact
+  return __artifacts
 
 
 @fixture
@@ -39,16 +37,16 @@ def detections(*,
                images: str | list[str],
                details: DetectionDetails,
                asset: Callable[[str], str],
-               artifact: Callable[[], str],
-               setup_run, setup) -> list[dict[str, Any]]:
+               artifacts: Callable[[], str],
+               setup_run, setup) -> list[ImageWithNumberPlates] | list[DetectedNumberPlate]:
 
   if isinstance(images, list):
     return number_plates.detect(
       [asset(image) for image in images],
       details=details, 
-      save_artifacts=artifact())
+      save_artifacts=artifacts())
   
   return number_plates.detect(
     asset(images),
     details=details, 
-    save_artifacts=artifact())
+    save_artifacts=artifacts())

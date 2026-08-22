@@ -12,7 +12,6 @@ ARTIFACTS = '.tests-artifacts/vehicles'
 @fixture(scope='package')
 def setup_run():
   shutil.rmtree(ARTIFACTS, ignore_errors=True)
-  os.makedirs(ARTIFACTS)
   vehicles.setup()
 
 @fixture
