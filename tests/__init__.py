@@ -1,3 +1,3 @@
 from common import utils
 
-utils.make_temp_dir('.tests-artifacts')
+utils.make_gitignored_dir('.tests-artifacts')

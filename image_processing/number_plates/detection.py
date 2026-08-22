@@ -77,7 +77,7 @@ async def detect_async(source: list[np.ndarray],
   ...
 
 @overload
-async def detect_async(source: list[str|Path],
+async def detect_async(source: list[str] | list[Path],
                        *,
                        details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = None
@@ -96,7 +96,7 @@ async def detect_async(source: list[str|Path],
   ...
 
 
-async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list[str|Path],
+async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
                        *,
                        names: list[str] | None = None,
                        details: DetectionDetails = DetectionDetails.FULL,
@@ -173,7 +173,7 @@ def detect(source: list[np.ndarray],
 
 
 @overload
-def detect(source: list[str|Path],
+def detect(source: list[str] | list[Path],
            *,
            details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = ...
@@ -193,7 +193,7 @@ def detect(source: list[str|Path],
   ...
 
 
-def detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str|Path],
+def detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
            *,
            names: list[str] | None = None,
            details: DetectionDetails = DetectionDetails.FULL,
@@ -202,12 +202,12 @@ def detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str|Path],
   return _detect(source, names=names, details=details, save_artifacts=save_artifacts)
 
 
-def _detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str|Path],
-           *,
-           names: list[str] | None,
-           details: DetectionDetails,
-           save_artifacts: str | Path | None
-          ) -> list[dict[str, Any]]:
+def _detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
+            *,
+            names: list[str] | None,
+            details: DetectionDetails,
+            save_artifacts: str | Path | None
+           ) -> list[dict[str, Any]]:
   if isinstance(source, list):
     return _detect_in_many(source, names, details, save_artifacts)
   return _detect_in_one(source, details, save_artifacts)
@@ -221,7 +221,7 @@ def _detect_in_one(image: np.ndarray | str | Path,
   return _process_detections(detections, details, save_artifacts)
 
 
-def _detect_in_many(images: list[np.ndarray] | list[str|Path],
+def _detect_in_many(images: list[np.ndarray] | list[str] | list[Path],
                     names: list[str] | None,
                     details: DetectionDetails,
                     save_artifacts: str | Path | None
@@ -239,7 +239,7 @@ def _detect_in_one_of_many(image: np.ndarray | str | Path,
                            save_artifacts: str | Path | None
                           ) -> dict[str, Any]:
   if not name:
-    if isinstance(image, (str | Path)):
+    if isinstance(image, str | Path):
       name = Path(image).stem
     else:
       name = f'image_{index+1}'
@@ -257,7 +257,7 @@ def _detect_in_one_of_many(image: np.ndarray | str | Path,
 
 
 def _get_detections_for_image(image: np.ndarray | str | Path) -> list:
-  if isinstance(image, (str | Path)): 
+  if isinstance(image, str | Path): 
     read_image = cv.imread(str(image), cv.IMREAD_COLOR_RGB)
     assert read_image is not None
     image = read_image
