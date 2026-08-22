@@ -17,7 +17,7 @@ def setup(*countries: DetectCountry):
 
 
 @overload
-async def detect_async(source: np.ndarray,
+async def detect_async(source: np.ndarray | str | Path,
                        *,
                        details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = None
@@ -26,55 +26,15 @@ async def detect_async(source: np.ndarray,
   Async detect and decode number plates in an image.
 
   Args:
-    source: input image, RGB format expected.
+    source: input image path or image in RGB format.
     details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
-    a list of dictionaries containing detection results for each input image.
+    a list of detected number plates
   """
   ...
 
-@overload
-async def detect_async(source: str | Path,
-                       *,
-                       details: DetectionDetails = DetectionDetails.FULL,
-                       save_artifacts: str | Path | None = None
-                      ) -> list[dict[str, Any]]:
-  """
-  Async detect and decode number plates in an image.
-
-  Args:
-    source: input image path.
-    details: DetectionDetails, the level of details to return.
-    save_artifacts: path to a filename (.jpg) to save detection details to.
-
-  Returns:
-    a list of dictionaries containing detection results for each input image.
-  """
-  ...
-
-
-@overload
-async def detect_async(source: list[np.ndarray],
-                       *,
-                       names: list[str] | None = None,
-                       details: DetectionDetails = DetectionDetails.FULL,
-                       save_artifacts: str | Path | None = None
-                      ) -> list[dict[str, Any]]:
-  """
-  Async detect and decode number plates in images.
-
-  Args:
-    source: input images, RGB format expected.
-    names: optional image names.
-    details: DetectionDetails, the level of details to return.
-    save_artifacts: path to a filename (.jpg) to save detection details to.
-
-  Returns:
-    a list of dictionaries containing detection results for each input image.
-  """
-  ...
 
 @overload
 async def detect_async(source: list[str] | list[Path],
@@ -96,31 +56,19 @@ async def detect_async(source: list[str] | list[Path],
   ...
 
 
-async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
+@overload
+async def detect_async(source: list[np.ndarray],
                        *,
                        names: list[str] | None = None,
                        details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = None
                       ) -> list[dict[str, Any]]:
-  return await asyncio.to_thread(_detect, 
-                                 source, 
-                                 names = names, 
-                                 details = details, 
-                                 save_artifacts = save_artifacts)
-
-
-
-@overload
-def detect(source: np.ndarray,
-           *,
-           details: DetectionDetails = DetectionDetails.FULL,
-           save_artifacts: str | Path | None = ...
-          ) -> list[dict[str, Any]]:
   """
-  Detect and decode number plates in an image.
+  Async detect and decode number plates in images.
 
   Args:
-    source: input image, RGB format expected.
+    source: input images in RGB format.
+    names: optional image names.
     details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
@@ -130,8 +78,17 @@ def detect(source: np.ndarray,
   ...
 
 
+async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
+                       *,
+                       names: list[str] | None = None,
+                       details: DetectionDetails = DetectionDetails.FULL,
+                       save_artifacts: str | Path | None = None
+                      ) -> list[dict[str, Any]]:
+  return await asyncio.to_thread(_detect, source, names, details, save_artifacts)
+
+
 @overload
-def detect(source: str | Path,
+def detect(source: np.ndarray | str | Path,
            *,
            details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = ...
@@ -140,12 +97,12 @@ def detect(source: str | Path,
   Detect and decode number plates in an image.
 
   Args:
-    source: input image path.
+    source: input image path or image in RGB format.
     details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
-    a list of dictionaries containing detection results for each input image.
+    a list of detected number plates.
   """
   ...
 
@@ -161,7 +118,7 @@ def detect(source: list[np.ndarray],
   Detect and decode number plates in images.
 
   Args:
-    source: input images, RGB format expected.
+    source: input images in RGB format.
     names: optional image names.
     details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
@@ -183,7 +140,6 @@ def detect(source: list[str] | list[Path],
 
   Args:
     source: input images' paths.
-    names: optional image names.
     details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
@@ -199,11 +155,10 @@ def detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list
            details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = None
           ) -> list[dict[str, Any]]:
-  return _detect(source, names=names, details=details, save_artifacts=save_artifacts)
+  return _detect(source, names, details, save_artifacts)
 
 
 def _detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
-            *,
             names: list[str] | None,
             details: DetectionDetails,
             save_artifacts: str | Path | None

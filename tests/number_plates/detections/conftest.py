@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Callable
+from typing import Any, Callable
 from pytest import fixture, FixtureRequest
 from image_processing import number_plates
 from common.types import DetectionDetails
@@ -40,7 +40,7 @@ def detections(*,
                details: DetectionDetails,
                asset: Callable[[str], str],
                artifact: Callable[[], str],
-               setup_run, setup):
+               setup_run, setup) -> list[dict[str, Any]]:
 
   if isinstance(images, list):
     return number_plates.detect(
