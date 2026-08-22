@@ -2,7 +2,6 @@ import io
 from typing import Any
 from abc import ABC, abstractmethod
 from aiohttp import FormData
-from common.types import DetectionDetails
 from .worker import Worker
 
 
@@ -13,11 +12,10 @@ class WorkerTask(ABC):
 
 
 class ImageDetectionWorkerTask(WorkerTask):
-  def __init__(self, path: str, details: DetectionDetails):
+  def __init__(self, path: str):
     self._path = path
     self._filenames = []
     self._form_data = FormData()
-    self._form_data.add_field("details", details)
 
   def add_image(self, filename: str, content_type: str, contents: bytes):
     self._filenames.append(filename)

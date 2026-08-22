@@ -94,7 +94,7 @@ for test in tests:
 
   if not found:
     print(f'❌ {country}: error reading number plate {expected_text} – '
-          f'got {", ".join([f'{r.text} [{r.region}]' for r in detections])} instead')
+          f'got {", ".join([f'{np.text} [{np.region}]' for np in detections])} instead')
     failed = True
 
 print(f'---------------------------------')

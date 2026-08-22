@@ -4,7 +4,6 @@ from typing import Any, Callable
 from pytest import fixture, FixtureRequest
 from image_processing import number_plates
 from common.models import ImageWithNumberPlates, DetectedNumberPlate
-from common.types import DetectionDetails
 
 
 ASSETS = 'tests/number_plates/detection/assets'
@@ -29,13 +28,8 @@ def artifacts(request: FixtureRequest):
 
 
 @fixture
-def details() -> DetectionDetails:
-  return DetectionDetails.FULL
-
-@fixture
 def detections(*, 
                images: str | list[str],
-               details: DetectionDetails,
                asset: Callable[[str], str],
                artifacts: Callable[[], str],
                setup_run, setup) -> list[ImageWithNumberPlates] | list[DetectedNumberPlate]:
@@ -43,10 +37,8 @@ def detections(*,
   if isinstance(images, list):
     return number_plates.detect(
       [asset(image) for image in images],
-      details=details, 
       save_artifacts=artifacts())
   
   return number_plates.detect(
     asset(images),
-    details=details, 
     save_artifacts=artifacts())

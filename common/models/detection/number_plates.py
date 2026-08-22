@@ -1,7 +1,3 @@
-from enum import Enum
-
-from torch import Tensor
-  
 
 class DetectedNumberPlate:
   class Confidences:

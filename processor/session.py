@@ -2,7 +2,6 @@ import io
 from typing import Any
 from aiohttp import ClientSession, ClientError, ContentTypeError, FormData
 
-from common.types import DetectionDetails
 from common.logging import logger
 from . import SCHEDULER_ACCESS_TOKEN, SCHEDULER_URL
 
@@ -30,7 +29,6 @@ class SchedulerSession:
 
   async def detect(self, filename: str, contents: bytes) -> dict[str, Any]:
     form_data = FormData()
-    form_data.add_field("details", DetectionDetails.FULL)
     # Sending a large body directly with raw bytes might lock the event loop
     data_stream = io.BytesIO(contents)  # Passing io.BytesIO instead
     form_data.add_field("images", data_stream, 

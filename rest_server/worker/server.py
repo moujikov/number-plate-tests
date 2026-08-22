@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer
 from numpy import ndarray
 
 from common.logging import logger as common_logger
-from common.types import DetectionDetails, DetectCountry
+from common.types import DetectCountry
 from image_processing import jpeg, number_plates
 from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
@@ -55,11 +55,10 @@ async def healthcheck():
 @app.post('/detect')
 async def detect(
            access_token: str = Depends(auth),
-           images: list[UploadFile] = File(...),
-           details: DetectionDetails = Form(DetectionDetails.NONE)
+           images: list[UploadFile] = File(...)
           ):
   check_authorized(access_token)
-  return await _with_concurrency_check(_detect(images, details))
+  return await _with_concurrency_check(_detect(images))
 
 
 
@@ -79,13 +78,13 @@ async def _with_concurrency_check(task: Awaitable) -> Any:
     concurrent_requests -= 1
 
 
-async def _detect(upload_files: list[UploadFile], details: DetectionDetails) -> dict[str, Any]:
+async def _detect(upload_files: list[UploadFile]) -> dict[str, Any]:
   names = [urlparse.unquote(f.filename) if f.filename else '' for f in upload_files]
   logger.debug(f'Processing files: {", ".join(names)}')
 
   try:
     images = await _read_request_images(upload_files)
-    results = await number_plates.detect_async(images, names = names, details = details)
+    results = await number_plates.detect_async(images, names = names)
 
     number_plates_digest: list[str] = []
     for image_detections in results:

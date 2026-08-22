@@ -16,7 +16,6 @@ Options:
                   If ommitted a full set of local test images will be used
   --token, -t     Access token for authentication
                   Also accepts file path to read token from
-  --details, -d   Result details level (default: none (number plate only); options: full, region)
   --help, -h      Show this help
 
 Examples:
@@ -30,7 +29,6 @@ EOF
 
 BASE_URL=""
 TOKEN=""
-DETAILS=""
 FILES=()
 
 while [[ $# -gt 0 ]]; do
@@ -71,14 +69,6 @@ while [[ $# -gt 0 ]]; do
       TOKEN="${1#*=}"
       shift
       ;;
-    --details|-d)
-      DETAILS="${2:-}"
-      shift 2
-      ;;
-    --details=*)
-      DETAILS="${1#*=}"
-      shift
-      ;;
     --help|-h)
       usage
       exit 0
@@ -103,10 +93,6 @@ if [[ -n "$TOKEN" ]]; then
     TOKEN="$(< "$TOKEN")"
   fi
   CURL_ARGS+=( -H "Authorization: Bearer ${TOKEN}" )
-fi
-
-if [[ -n "$DETAILS" ]]; then
-  CURL_ARGS+=( -F "details=${DETAILS}" )
 fi
 
 

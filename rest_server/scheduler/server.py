@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordBearer
 from asgi_correlation_id import CorrelationIdMiddleware
 
 from common.logging import logger as common_logger
-from common.types import DetectionDetails
 from rest_server.common.logging import logger, log_request, log_exception
 from rest_server.common.auth import check_authorized
 from .task import ImageDetectionWorkerTask
@@ -54,17 +53,16 @@ async def healthcheck():
 @app.post('/detect')
 async def detect(
               access_token: str = Depends(auth),
-              images: list[UploadFile] = File(...),
-              details: DetectionDetails = Form(DetectionDetails.NONE)
+              images: list[UploadFile] = File(...)
               ):
   check_authorized(access_token)
-  return await forward_request("detect", images, details)
+  return await forward_request("detect", images)
 
 
 
 ### Helper functions
 
-async def forward_request(path: str, upload_files: list[UploadFile], details: DetectionDetails):
+async def forward_request(path: str, upload_files: list[UploadFile]):
   filenames = [urlparse.unquote(f.filename) if f.filename else '(unknown)' for f in upload_files]
   logger.info(f'Processing files: {", ".join(filenames)}')
 
@@ -72,7 +70,7 @@ async def forward_request(path: str, upload_files: list[UploadFile], details: De
     async with asyncio.TaskGroup() as tg:
       tasks = []
       for file in upload_files:
-        t = ImageDetectionWorkerTask(path, details)
+        t = ImageDetectionWorkerTask(path)
         name = urlparse.unquote(file.filename) if file.filename else '(unknown)'
         content_type = file.content_type if file.content_type else 'image/jpeg'
         contents = await file.read()

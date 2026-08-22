@@ -5,7 +5,7 @@ from typing import overload
 import cv2 as cv
 import numpy as np
 
-from common.types import DetectCountry, DetectionDetails
+from common.types import DetectCountry
 from common.models import DetectedNumberPlate, ImageWithNumberPlates
 from . import pipeline, sharpness
 
@@ -21,7 +21,6 @@ def setup(*countries: DetectCountry):
 @overload
 async def detect_async(source: np.ndarray | str | Path,
                        *,
-                       details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = ...
                       ) -> list[DetectedNumberPlate]:
   """
@@ -29,7 +28,6 @@ async def detect_async(source: np.ndarray | str | Path,
 
   Args:
     source: input image path or image in RGB format.
-    details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
@@ -41,7 +39,6 @@ async def detect_async(source: np.ndarray | str | Path,
 @overload
 async def detect_async(source: list[str] | list[Path],
                        *,
-                       details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = ...
                       ) -> list[ImageWithNumberPlates]:
   """
@@ -49,7 +46,6 @@ async def detect_async(source: list[str] | list[Path],
 
   Args:
     source: input images' paths.
-    details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
@@ -62,7 +58,6 @@ async def detect_async(source: list[str] | list[Path],
 async def detect_async(source: list[np.ndarray],
                        *,
                        names: list[str] | None = ...,
-                       details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = ...
                       ) -> list[ImageWithNumberPlates]:
   """
@@ -71,7 +66,6 @@ async def detect_async(source: list[np.ndarray],
   Args:
     source: input images in RGB format.
     names: optional image names.
-    details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
@@ -83,7 +77,6 @@ async def detect_async(source: list[np.ndarray],
 async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
                        *,
                        names: list[str] | None = None,
-                       details: DetectionDetails = DetectionDetails.FULL,
                        save_artifacts: str | Path | None = None
                       ) -> list[DetectedNumberPlate] | list[ImageWithNumberPlates]:
   return await asyncio.to_thread(_detect, source, names, save_artifacts)
@@ -92,7 +85,6 @@ async def detect_async(source: np.ndarray | str | Path | list[np.ndarray] | list
 @overload
 def detect(source: np.ndarray | str | Path,
            *,
-           details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = ...
           ) -> list[DetectedNumberPlate]:
   """
@@ -113,7 +105,6 @@ def detect(source: np.ndarray | str | Path,
 def detect(source: list[np.ndarray],
            *,
            names: list[str] | None = ...,
-           details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = ...
           ) -> list[ImageWithNumberPlates]:
   """
@@ -122,7 +113,6 @@ def detect(source: list[np.ndarray],
   Args:
     source: input images in RGB format.
     names: optional image names.
-    details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
@@ -134,7 +124,6 @@ def detect(source: list[np.ndarray],
 @overload
 def detect(source: list[str] | list[Path],
            *,
-           details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = ...
           ) -> list[ImageWithNumberPlates]:
   """
@@ -142,7 +131,6 @@ def detect(source: list[str] | list[Path],
 
   Args:
     source: input images' paths.
-    details: DetectionDetails, the level of details to return.
     save_artifacts: path to a filename (.jpg) to save detection details to.
 
   Returns:
@@ -154,7 +142,6 @@ def detect(source: list[str] | list[Path],
 def detect(source: np.ndarray | str | Path | list[np.ndarray] | list[str] | list[Path],
            *,
            names: list[str] | None = None,
-           details: DetectionDetails = DetectionDetails.FULL,
            save_artifacts: str | Path | None = None
           ) -> list[DetectedNumberPlate] | list[ImageWithNumberPlates]:
   return _detect(source, names, save_artifacts)
